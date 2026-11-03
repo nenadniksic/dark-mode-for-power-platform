@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Studio's Settings dialog in the Neon style: General / Display / Updates / Support each sat in a pink box. They are Fluent buttons acting as tabs, and the glow meant for bordered controls caught them. Tabs no longer glow; the selected page gets a pink edge instead.
+- Disabled switches showed no state in either style (Settings > Updates when the app is read-only or shared): the thumb became as dark as the pill. A disabled switch is now an outline when off and filled when on.
+- In the Neon style, disabled controls glowed like enabled ones. They now keep a plain edge and no halo.
+- Disabled text was close to unreadable (about 2.3:1 on a dialog, a murky purple in the Neon style), and Studio explains disabled settings in it. It now reads at 3:1, still clearly dimmer than enabled text.
+
 ## 1.2.1 — 2026-11-03
 
 - Renamed from Canvas Studio Dark Mode to Dark Mode for Power Platform, now that it covers Power Automate and the whole maker portal as well as canvas Studio. Settings carry over unchanged.

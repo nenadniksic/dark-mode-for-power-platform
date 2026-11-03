@@ -54,6 +54,17 @@ html[data-capd="dark"] .ms-DetailsRow.is-selected { background-color: var(--capd
 html[data-capd="dark"] .ms-ContextualMenu-divider,
 html[data-capd="dark"] .ms-Divider { background-color: var(--capd-b1) !important; }
 
+/* Toggle (switch).  Fluent paints the thumb with background-color, so the
+   engine darkens it like a surface.  Enabled switches survive that; disabled
+   ones do not: a light-grey thumb on a white pill (off) or a near-white
+   thumb on a light-grey pill (on) became dark on dark, and the switch showed
+   no state at all (Settings > Updates when the app is read-only).  Draw
+   them as outlines when off and filled when on, in the disabled colour. */
+html[data-capd="dark"] .ms-Toggle.is-disabled .ms-Toggle-background { background-color: transparent !important; border-color: var(--capd-disabled) !important; }
+html[data-capd="dark"] .ms-Toggle.is-disabled .ms-Toggle-thumb { background-color: var(--capd-disabled) !important; }
+html[data-capd="dark"] .ms-Toggle.is-checked.is-disabled .ms-Toggle-background { background-color: var(--capd-disabled) !important; border-color: transparent !important; }
+html[data-capd="dark"] .ms-Toggle.is-checked.is-disabled .ms-Toggle-thumb { background-color: var(--capd-raised) !important; }
+
 /* Pivot (tabs) */
 html[data-capd="dark"] .ms-Pivot-link.is-selected::before { background-color: var(--capd-accent) !important; }
 html[data-capd="dark"] .ms-Pivot-link:hover { background-color: rgba(255, 255, 255, 0.06) !important; }

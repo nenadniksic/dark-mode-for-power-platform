@@ -18,11 +18,15 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-Button--primary:not(.is-disabl
 
 /* Selected tabs (Fluent v8 Pivot) light up */
 html[data-capd="dark"][data-capd-look="neon"] .ms-Pivot-link.is-selected::before { box-shadow: 0 0 8px var(--capd-glow) !important; }
+/* and so does the selected page of a vertical tab list (the Settings
+   dialog's General / Display / Updates / Support, which are default buttons) */
+html[data-capd="dark"][data-capd-look="neon"] [role="tablist"][aria-orientation="vertical"] .ms-Button[role="tab"][aria-selected="true"] { box-shadow: inset 3px 0 0 var(--capd-accent), inset 10px 0 12px -8px var(--capd-glow) !important; }
 
 /* Controls glow: a neon-pink edge with a soft halo on every bordered input,
    dropdown, switch, checkbox and option button, brighter on hover, cyan
    while focused.  Listed explicitly (Studio's Aphrodite controls, Fluent v8,
-   Fluent v9) so borderless elements never get a stray halo. */
+   Fluent v9) so borderless elements never get a stray halo; default buttons
+   that act as tabs are not bordered controls, so they are left out. */
 html[data-capd="dark"][data-capd-look="neon"] input[class*="inputStyles_"],
 html[data-capd="dark"][data-capd-look="neon"] button[class*="faceplate_"],
 html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][class*="button_"],
@@ -33,7 +37,7 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]),
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown,
@@ -57,7 +61,7 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:hover,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:hover,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:hover,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:hover,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):hover,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input:hover,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:hover,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:hover,
@@ -80,7 +84,7 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:focus,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:focus,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:focus,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:focus,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):focus,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input:focus,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:focus,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:focus,
@@ -101,7 +105,7 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:focus-within,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:focus-within,
@@ -120,6 +124,37 @@ html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][aria-checked=
   background-color: rgba(255, 42, 138, 0.22) !important;
   box-shadow: 0 0 12px rgba(255, 42, 138, 0.8), inset 0 0 6px rgba(255, 42, 138, 0.3) !important;
 }
+
+/* Disabled controls do not glow: a halo says "use me", and on a read-only
+   Settings page every switch was lit while its text was dimmed.  They keep
+   a plain edge in the disabled colour.  Last and more specific, so it
+   outranks the hover, focus and chosen-option rules above. */
+html[data-capd="dark"][data-capd-look="neon"] input[class*="inputStyles_"]:disabled,
+html[data-capd="dark"][data-capd-look="neon"] button[class*="faceplate_"]:disabled,
+html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][class*="button_"]:disabled,
+html[data-capd="dark"][data-capd-look="neon"] .ms-TextField.is-disabled .ms-TextField-fieldGroup,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Dropdown.is-disabled .ms-Dropdown-title,
+html[data-capd="dark"][data-capd-look="neon"] .ms-ComboBox.is-disabled,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox.is-disabled,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:has(input:disabled),
+html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle.is-disabled .ms-Toggle-background,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox.is-disabled .ms-Checkbox-checkbox,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default.is-disabled,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Input:has(input:disabled),
+html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:has(textarea:disabled),
+html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:has(button:disabled),
+html[data-capd="dark"][data-capd-look="neon"] .fui-Combobox:has(input:disabled),
+html[data-capd="dark"][data-capd-look="neon"] .fui-SpinButton:has(input:disabled),
+html[data-capd="dark"][data-capd-look="neon"] .fui-SearchBox:has(input:disabled),
+html[data-capd="dark"][data-capd-look="neon"] .fui-Select__select:disabled,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Switch__input:disabled ~ .fui-Switch__indicator,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Checkbox__input:disabled ~ .fui-Checkbox__indicator,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Radio__input:disabled ~ .fui-Radio__indicator {
+  border-color: var(--capd-disabled) !important;
+  box-shadow: none !important;
+}
+/* A disabled switch that is on is filled, so its edge disappears into it */
+html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle.is-checked.is-disabled .ms-Toggle-background { border-color: transparent !important; }
 
 /* Text selection and caret in neon */
 html[data-capd="dark"][data-capd-look="neon"] .monaco-editor .cursors-layer .cursor { background-color: var(--capd-neon-cyan) !important; border-color: var(--capd-neon-cyan) !important; }

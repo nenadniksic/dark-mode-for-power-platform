@@ -67,7 +67,9 @@ export function runChecks() {
       ['colorStatusWarningForeground1', 'colorNeutralBackground1', 4.5],
       ['colorNeutralStrokeAccessible', 'colorNeutralBackground1', 3],
       ['colorStrokeFocus2', 'colorNeutralBackground1', 3],
-      ['colorNeutralForegroundDisabled', 'colorNeutralBackground1', 1.5],
+      // disabled text is exempt from WCAG, but Studio explains disabled settings in it
+      ['colorNeutralForegroundDisabled', 'colorNeutralBackground1', 3],
+      ['colorNeutralForegroundDisabled', 'colorNeutralCardBackground', 3],
     ];
     for (const [fg, bg, min] of pairs) {
       const a = t(fg), b = t(bg);
@@ -94,7 +96,7 @@ export function runChecks() {
     }
     // palette variables used by the hand-written CSS
     const vars = Object.fromEntries(CAPD.staticTheme.paletteVars(settings).match(/--capd-[^:]+:[^;]+/g).map((d) => { const i = d.indexOf(':'); return [d.slice(7, i), d.slice(i + 1)]; }));
-    for (const [fgName, bgName, min] of [['t1', 's1', minText], ['t2', 's1', minText], ['t1', 's2', minText], ['t1', 'raised', minText], ['t2', 'raised', minText], ['accent', 's1', 4.5], ['accent', 'raised', 4.5], ['link', 's1', 4.5], ['link', 'raised', 4.5], ['t1', 'backdrop', minText], ['b3', 's1', 3]]) {
+    for (const [fgName, bgName, min] of [['t1', 's1', minText], ['t2', 's1', minText], ['t1', 's2', minText], ['t1', 'raised', minText], ['t2', 'raised', minText], ['accent', 's1', 4.5], ['accent', 'raised', 4.5], ['link', 's1', 4.5], ['link', 'raised', 4.5], ['t1', 'backdrop', minText], ['b3', 's1', 3], ['disabled', 's1', 3], ['disabled', 'raised', 3]]) {
       const ratio = color.contrast(color.parse(vars[fgName]), color.parse(vars[bgName]));
       report.push(`${label.padEnd(24)} --capd-${fgName} on --capd-${bgName} ${ratio.toFixed(2).padStart(6)}  (min ${min})`);
       if (ratio < min) failures.push(`${label}: --capd-${fgName} ${vars[fgName]} on --capd-${bgName} ${vars[bgName]} = ${ratio.toFixed(2)} < ${min}`);

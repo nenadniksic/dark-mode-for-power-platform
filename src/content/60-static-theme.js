@@ -171,6 +171,11 @@
      deepened until white reads on it. */
   const BRAND_BG_RE = /^colorBrandBackground(Hover|Pressed|Selected)?$|^colorBrandBackgroundInverted(Hover|Pressed|Selected)$/;
   const WHITE = { r: 255, g: 255, b: 255, a: 1 };
+  /* Disabled text is exempt from WCAG, but Studio explains its disabled
+     settings in it (whole paragraphs in Settings > Updates), and at the
+     ramp's own dark value (g36, about 2.3:1 on a dialog) it is a smudge.
+     3:1 reads, and stays well below any enabled text. */
+  const DISABLED_MIN = 3;
 
   function tokenCSS(settings) {
     const spec = CAPD.FLUENT_DARK_SPEC || {};
@@ -187,6 +192,7 @@
       if (FG_TOKEN_RE.test(name) && !FG_TOKEN_SKIP_RE.test(name)) value = ensureContrast(value, surface, settings.contrast === 'high' && /^colorNeutralForeground/.test(name) ? 7 : 4.5);
       else if (BRAND_STROKE_RE.test(name)) value = ensureContrast(value, surface, 3);
       else if (BRAND_BG_RE.test(name)) value = darkenUnder(value, WHITE, 4.5);
+      else if (name === 'colorNeutralForegroundDisabled') value = ensureContrast(value, surface, DISABLED_MIN);
       if (name === 'colorStrokeFocus2' && settings.look === 'neon') value = NEON_CYAN;
       decls.push(`--${name}:${value} !important;`);
     }
@@ -220,6 +226,7 @@
     // the lightest ones text sits on; that implies the base surface too.
     const raised = greyFor(20, settings);
     const onRaised = (value) => ensureContrast(value, color.parse(raised), 4.5);
+    const spec = CAPD.FLUENT_DARK_SPEC || {};
     const vars = {
       's0': map('bg', '#e0e0e0'),
       's1': map('bg', '#ffffff'),
@@ -234,6 +241,9 @@
       'b1': map('bd', '#edebe9'),
       'b2': map('bd', '#c8c6c4'),
       'b3': map('bd', '#8a8886'),
+      // disabled text and the marks of disabled controls: the same colour
+      // as the Fluent token colorNeutralForegroundDisabled
+      'disabled': ensureContrast(resolveSpec(spec.colorNeutralForegroundDisabled || 'g36', settings), color.parse(raised), DISABLED_MIN),
       'accent': onRaised(brand[100] || '#bc5fbc'),
       'accent-hover': onRaised(brand[110] || '#cb79cb'),
       'accent-bg': brand[70] || '#852985',
