@@ -4,7 +4,7 @@ A carefully crafted dark theme for **Power Apps canvas Studio**, the maker porta
 
 - Every part of Studio's chrome goes dark: command bar, formula bar (Monaco), tree view, Insert / Data / Variables panes, properties pane, dialogs, menus, tooltips, settings, Copilot and comments panes.
 - Power Automate goes dark too: home, My flows, flow details, the new and the classic flow designer, templates, approvals and monitoring, and the Flows pages the Power Apps portal embeds from it.
-- Each product keeps its own accent colour (Power Apps purple, Power Automate blue), read from the page's own Fluent theme.
+- Each product keeps its own accent colour (Power Apps purple, Power Automate blue), read from the page's own Fluent theme. Or switch the Style to **Neon** for a cyberpunk hot-pink look.
 - **Your app is never recoloured.** The canvas that renders the app you are designing is excluded from every rule, so what you see is what your users get. Colour previews (swatches, the colour picker) are excluded the same way, so they show the colour you are choosing.
 - Accessible by design: every text/surface pairing the theme produces is checked against WCAG 2.1 AA (AAA in the high-contrast setting), focus rings are preserved, Windows High Contrast mode is respected, and the extension never changes the DOM structure or ARIA of the page.
 - Zero telemetry, no accounts, no network requests other than fetching Studio's own stylesheets.
@@ -29,6 +29,7 @@ Open the toolbar popup or the full options page (`All settings`).
 | Dark mode | Master switch (also **Alt+Shift+D**, configurable at `chrome://extensions/shortcuts`). |
 | Appearance | *Always dark*, or *Follow system* (dark only while your OS colour scheme is dark). |
 | Surface | *Dim*, *Dark* (Fluent UI's dark theme greys) or *Black* for OLED-style surfaces. |
+| Style | *Classic* keeps each product's own colours. *Neon* is a cyberpunk take: violet-black surfaces, hot-pink accents everywhere and cyan focus rings. |
 | High contrast text | Brighter text and stronger borders targeting WCAG AAA. Turns on automatically when the OS asks for more contrast. |
 | Dark canvas backdrop | Darkens the dotted work area around the app. Turn it off to keep the light backdrop and judge your app against a neutral frame. |
 | Adapt two-tone icons | Lightens dark neutral strokes in Studio's control icons; coloured parts are never changed. |
@@ -72,7 +73,7 @@ document.querySelector('iframe[name="EmbeddedStudio"]').contentWindow.postMessag
 
 Frames answer only their direct parent, and only on a Power Apps or Power Automate maker origin.
 
-With **Developer diagnostics** switched on in the options, the same bridge also answers `{ type: 'capd:inspect', x, y }` (or `selector`) with the elements there and the colour rules that apply to them, and `{ type: 'capd:probe-css', css }` by installing test CSS in the frame (an empty string removes it).
+With **Developer diagnostics** switched on in the options, the same bridge also answers `{ type: 'capd:inspect', x, y }` (or `selector`) with the elements there and the colour rules that apply to them, `{ type: 'capd:probe-css', css }` by installing test CSS in the frame (an empty string removes it), and `{ type: 'capd:override', settings: { look: 'neon' } }` by previewing settings in that page until it reloads.
 
 ## Compatibility
 

@@ -14,6 +14,7 @@
     enabled: true,
     mode: 'dark',          // 'dark' | 'system'
     surface: 'dark',       // 'dim' | 'dark' | 'black'
+    look: 'classic',       // 'classic' | 'neon' (cyberpunk: violet-black, hot pink, cyan focus)
     contrast: 'standard',  // 'standard' | 'high'
     backdrop: 'dark',      // 'dark' | 'light'  (the dotted area around the app canvas)
     makerPortal: true,     // theme make.powerapps.com pages outside Studio too
@@ -32,6 +33,7 @@
     const s = { ...DEFAULTS, ...(raw && typeof raw === 'object' ? raw : {}) };
     if (!['dark', 'system'].includes(s.mode)) s.mode = DEFAULTS.mode;
     if (!['dim', 'dark', 'black'].includes(s.surface)) s.surface = DEFAULTS.surface;
+    if (!['classic', 'neon'].includes(s.look)) s.look = DEFAULTS.look;
     if (!['standard', 'high'].includes(s.contrast)) s.contrast = DEFAULTS.contrast;
     if (!['dark', 'light'].includes(s.backdrop)) s.backdrop = DEFAULTS.backdrop;
     s.enabled = !!s.enabled; s.makerPortal = !!s.makerPortal; s.iconAdapt = !!s.iconAdapt; s.devDiagnostics = !!s.devDiagnostics;

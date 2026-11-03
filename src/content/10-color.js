@@ -228,6 +228,24 @@
      surface setting; mirrors the static theme's --capd-raised. */
   const RAISED_STEP = { dim: 24, dark: 20, black: 14 };
 
+  /*
+   * Styles that tint the neutrals.  Classic keeps Fluent's neutral greys.
+   * Neon (cyberpunk) turns neutral surfaces violet-black, neutral text a
+   * faint pink-lavender and neutral strokes magenta-grey; coloured values
+   * (brand, status, syntax colours) keep their own hue.  Lightness is
+   * untouched, so every contrast guarantee of the classic mapping holds.
+   */
+  const LOOKS = {
+    neon: { bgHue: 268, bg: 0.36, fgHue: 305, fg: 0.32, bdHue: 300, bd: 0.32 },
+  };
+
+  /** The tinted grey of lightness `l` for a role ('bg' | 'fg' | 'bd'), or null in the classic style. */
+  function tintGrey(role, l, look) {
+    const t = LOOKS[look];
+    if (!t) return null;
+    return fromHsl(t[role + 'Hue'], t[role], l);
+  }
+
   function params(opts) {
     const o = opts || {};
     const surface = SURFACE_LIGHTNESS[o.surface] !== undefined ? SURFACE_LIGHTNESS[o.surface] : SURFACE_LIGHTNESS.dark;
@@ -246,6 +264,7 @@
       bdDark: high ? 0.32 : 0.24,
       bdStrong: high ? 0.78 : 0.66,
       satCap: 0.78,
+      tint: LOOKS[o.look] || null,
     };
   }
 
@@ -281,24 +300,28 @@
     // (#fffffe has s = 1); judge neutrality by chroma instead.
     const chroma = (Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b)) / 255;
     if (chroma < 0.1) s = 0;
+    let h = hsl.h;
+    const tint = chroma < 0.1 ? p.tint : null; // only neutrals are tinted
     switch (kind) {
       case 'bg':
         l = mapBgLightness(hsl.l, p);
         if (hsl.l >= 0.5) s = Math.min(s, 0.6);
+        if (tint) { h = tint.bgHue; s = tint.bg; }
         break;
       case 'fg':
         l = mapFgLightness(hsl.l, p);
         if (hsl.l <= 0.5) s = Math.min(s, p.satCap);
+        if (tint) { h = tint.fgHue; s = tint.fg; }
         if (hsl.l <= 0.9) {
           // Guarantee legibility: raise lightness until the mapped text meets
           // the contrast target (WCAG AA, AAA in high-contrast mode) on the
           // raised surface, the lightest one text sits on (menus, callouts,
           // dialogs); it then also holds on the base surface.  Saturated hues
           // such as pure blue need this.
-          const surface = fromHsl(0, 0, p.raised);
+          const surface = p.tint ? fromHsl(p.tint.bgHue, p.tint.bg, p.raised) : fromHsl(0, 0, p.raised);
           const target = p.fgMax > 0.95 ? 7 : 4.5;
           let guard = 0;
-          while (contrast(fromHsl(hsl.h, s, l), surface) < target && l < 0.97 && guard++ < 40) {
+          while (contrast(fromHsl(h, s, l), surface) < target && l < 0.97 && guard++ < 40) {
             l += 0.02; s = Math.max(0, s - 0.01);
           }
         }
@@ -306,6 +329,7 @@
       case 'bd':
         l = mapBdLightness(hsl.l, p);
         s = Math.min(s, 0.5);
+        if (tint) { h = tint.bdHue; s = tint.bd; }
         break;
       case 'sh':
         if (hsl.l > 0.5) { l = 0.02; s = 0; }
@@ -319,8 +343,8 @@
       default:
         return c;
     }
-    if (Math.abs(l - hsl.l) < 0.002 && Math.abs(s - hsl.s) < 0.002) return c;
-    return { ...fromHsl(hsl.h, s, l), a };
+    if (h === hsl.h && Math.abs(l - hsl.l) < 0.002 && Math.abs(s - hsl.s) < 0.002) return c;
+    return { ...fromHsl(h, s, l), a };
   }
 
   /**
@@ -395,8 +419,8 @@
   }
 
   return {
-    NAMED, KEYWORDS, SURFACE_LIGHTNESS,
-    parse, format, toHex, toHsl, fromHsl, luminance, contrast,
+    NAMED, KEYWORDS, SURFACE_LIGHTNESS, LOOKS,
+    parse, format, toHex, toHsl, fromHsl, luminance, contrast, tintGrey,
     params, modify, modifyColorString, rewriteValue, isColorLiteral, containsColor,
   };
 });

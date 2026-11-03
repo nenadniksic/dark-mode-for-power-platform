@@ -43,8 +43,8 @@ test('static and tuned layers are scoped away from the canvas, tuned rules use :
   assert.ok(tuned.includes(':scope[data-capd="dark"]'));
   assert.ok(st.startsWith(':root{--capd-s0:'), 'palette variables are declared outside the scope');
   // maker rules only for maker roles
-  assert.ok(!CAPD.staticTheme.buildTuned(settings, 'studio', true).includes('O365_NavHeader'));
-  assert.ok(CAPD.staticTheme.buildTuned(settings, 'studio-host', true).includes('O365_NavHeader'));
+  assert.ok(!CAPD.staticTheme.buildTuned(settings, 'studio', true).includes('o365sx-waffle'));
+  assert.ok(CAPD.staticTheme.buildTuned(settings, 'studio-host', true).includes('o365sx-waffle'));
 });
 
 test('shadow roots get unscoped CSS', () => {
@@ -53,8 +53,17 @@ test('shadow roots get unscoped CSS', () => {
 
 test('html attributes reflect the settings', () => {
   assert.deepEqual(CAPD.staticTheme.htmlAttrs({ ...settings, surface: 'black', iconAdapt: false, backdrop: 'light', contrast: 'high' }), {
-    'data-capd': 'dark', 'data-capd-surface': 'black', 'data-capd-contrast': 'high', 'data-capd-backdrop': 'light', 'data-capd-icons': 'original',
+    'data-capd': 'dark', 'data-capd-surface': 'black', 'data-capd-contrast': 'high', 'data-capd-backdrop': 'light', 'data-capd-icons': 'original', 'data-capd-look': 'classic',
   });
+  assert.equal(CAPD.staticTheme.htmlAttrs({ ...settings, look: 'neon' })['data-capd-look'], 'neon');
+});
+
+test('a text token painted as a background gets a surface-mapped variant', () => {
+  const css = CAPD.staticTheme.tokenCSS(settings);
+  assert.equal(CAPD.staticTheme.isExcludedVar('--colorNeutralForegroundInverted', 'bg'), false);
+  assert.equal(CAPD.staticTheme.isExcludedVar('--colorNeutralForegroundInverted', 'fg'), true);
+  // white in the light theme -> the base surface, the same grey the command bar sits on
+  assert.ok(css.includes('--capd-bg-colorNeutralForegroundInverted:rgb(41, 41, 41);'), css.match(/--capd-bg-colorNeutralForegroundInverted:[^;]*/)?.[0]);
 });
 
 test('role-aware exclusion keeps Fluent tokens static except surface tokens used as text', () => {
@@ -115,6 +124,42 @@ test('high contrast strengthens strokes but leaves Dim surfaces where the surfac
 
 test('colour previews are excluded like the canvas, so swatches and pickers show true colours', () => {
   const limit = CAPD.CANVAS_LIMIT_SELECTOR;
-  for (const sel of ['#publishedCanvas', '[class*="pickerFill_"]', '[class*="pickerBackground_"]', '.ms-ColorPicker-colorRect', '.ms-ColorPicker-slider']) assert.ok(limit.includes(sel), sel);
+  for (const sel of ['#publishedCanvas', '[id^="insertAffordance"]', '[class*="pickerFill_"]', '[class*="pickerBackground_"]', '.ms-ColorPicker-colorRect', '.ms-ColorPicker-slider']) assert.ok(limit.includes(sel), sel);
   assert.ok(CAPD.staticTheme.buildTuned(settings, 'studio', true).startsWith(`@scope (:root) to (${limit}){`));
+});
+
+test('Neon style: violet-black surfaces, hot-pink brand with white-readable buttons, cyan focus', () => {
+  const color = CAPD.color;
+  const neon = { ...settings, look: 'neon' };
+  const css = CAPD.staticTheme.tokenCSS(neon);
+  const get = (name) => (css.match(new RegExp(`--${name}:([^ ;]+)`)) || [])[1];
+  const bg = color.toHsl(color.parse(get('colorNeutralBackground1')));
+  assert.ok(Math.abs(bg.h - 268) < 3 && bg.s > 0.25, `surface is violet: ${get('colorNeutralBackground1')}`);
+  assert.ok(Math.abs(bg.l - 0.16) < 0.01, 'same lightness as the classic Dark surface');
+  const button = color.parse(get('colorBrandBackground'));
+  assert.ok(Math.abs(color.toHsl(button).h - 332) < 6, `brand is hot pink: ${get('colorBrandBackground')}`);
+  assert.ok(color.contrast(button, color.parse('#ffffff')) >= 4.5, 'white text reads on the brand button');
+  assert.equal(get('colorStrokeFocus2'), '#00e5ff');
+  assert.ok(!/#933493|#0066ff/i.test(css), 'no product brand left');
+  const pal = CAPD.staticTheme.paletteVars(neon);
+  assert.ok(pal.includes('--capd-focus:#00e5ff;'));
+  assert.ok(pal.includes('--capd-glow:rgba(255, 42, 138, 0.55);'));
+  // the generic mapping tints neutrals and leaves coloured values' hue alone
+  const white = color.toHsl(color.modify('bg', color.parse('#ffffff'), { look: 'neon' }));
+  assert.ok(Math.abs(white.h - 268) < 3 && white.s > 0.25);
+  const blue = color.toHsl(color.modify('fg', color.parse('#0078d4'), { look: 'neon' }));
+  assert.ok(Math.abs(blue.h - color.toHsl(color.parse('#0078d4')).h) < 2, 'syntax and status colours keep their hue');
+  // Classic is untouched
+  assert.ok(CAPD.staticTheme.tokenCSS(settings).includes('--colorNeutralBackground1:#292929 !important;'));
+});
+
+test('Neon glow rules are all gated on the neon look and scoped away from the canvas', () => {
+  const tuned = CAPD.staticTheme.buildTuned(settings, 'studio', true);
+  const neon = CAPD.themeCSS.neon;
+  assert.ok(neon.includes('.fui-Input') && neon.includes('input[class*="inputStyles_"]'), 'controls are listed');
+  // every selector in neon.css starts with the neon gate
+  for (const rule of neon.split('}').filter((r) => r.includes('{'))) {
+    for (const s of rule.slice(0, rule.indexOf('{')).split(/,(?![^(]*\))/)) assert.ok(s.trim().startsWith(':scope[data-capd="dark"][data-capd-look="neon"]'), s.trim().slice(0, 80));
+  }
+  assert.ok(tuned.includes(neon) && tuned.startsWith('@scope'), 'inside the canvas scope');
 });

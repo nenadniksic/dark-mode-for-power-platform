@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Canvas Studio Dark Mode",
   "short_name": "Studio Dark",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A carefully crafted dark theme for Power Apps Studio, the maker portal and Power Automate. Your app's canvas stays as designed.",
   "minimum_chrome_version": "120",
   "icons": {

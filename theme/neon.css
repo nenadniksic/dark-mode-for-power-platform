@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Neon style (cyberpunk): the colour work happens in the engine (violet-black
+   neutrals, a hot-pink brand ramp, cyan focus rings) and in the palette
+   variables.  These rules add the glow, and only where it marks something:
+   the header edge, primary actions, selected tabs, and the edges of every
+   control.  Every rule is gated on data-capd-look="neon".
+   ========================================================================== */
+
+/* Office header: a neon edge under the bar */
+html[data-capd="dark"][data-capd-look="neon"] #O365_NavHeader,
+html[data-capd="dark"][data-capd-look="neon"] #o365header { box-shadow: 0 1px 0 var(--capd-accent), 0 2px 16px var(--capd-glow) !important; }
+
+/* Studio's command bar: a faint neon line separates it from the work area */
+html[data-capd="dark"][data-capd-look="neon"] #commandBarContainer { box-shadow: 0 1px 0 var(--capd-glow) !important; }
+
+/* Primary actions glow (Fluent v8) */
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--primary:not(.is-disabled) { box-shadow: 0 0 12px var(--capd-glow) !important; }
+
+/* Selected tabs (Fluent v8 Pivot) light up */
+html[data-capd="dark"][data-capd-look="neon"] .ms-Pivot-link.is-selected::before { box-shadow: 0 0 8px var(--capd-glow) !important; }
+
+/* Controls glow: a neon-pink edge with a soft halo on every bordered input,
+   dropdown, switch, checkbox and option button, brighter on hover, cyan
+   while focused.  Listed explicitly (Studio's Aphrodite controls, Fluent v8,
+   Fluent v9) so borderless elements never get a stray halo. */
+html[data-capd="dark"][data-capd-look="neon"] input[class*="inputStyles_"],
+html[data-capd="dark"][data-capd-look="neon"] button[class*="faceplate_"],
+html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][class*="button_"],
+html[data-capd="dark"][data-capd-look="neon"] .ms-TextField-fieldGroup,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Dropdown-title,
+html[data-capd="dark"][data-capd-look="neon"] .ms-ComboBox,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Input,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Combobox,
+html[data-capd="dark"][data-capd-look="neon"] .fui-SpinButton,
+html[data-capd="dark"][data-capd-look="neon"] .fui-SearchBox,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Select__select,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Switch__indicator,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Checkbox__indicator,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Radio__indicator {
+  border-color: rgba(255, 42, 138, 0.75) !important;
+  box-shadow: 0 0 7px rgba(255, 42, 138, 0.5), inset 0 0 5px rgba(255, 42, 138, 0.14) !important;
+}
+html[data-capd="dark"][data-capd-look="neon"] input[class*="inputStyles_"]:hover,
+html[data-capd="dark"][data-capd-look="neon"] button[class*="faceplate_"]:hover,
+html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][class*="button_"]:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-TextField-fieldGroup:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Dropdown-title:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-ComboBox:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:hover,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Input:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Combobox:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-SpinButton:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-SearchBox:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Select__select:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Switch__indicator:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Checkbox__indicator:hover,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Radio__indicator:hover {
+  box-shadow: 0 0 12px rgba(255, 42, 138, 0.75), inset 0 0 6px rgba(255, 42, 138, 0.2) !important;
+}
+html[data-capd="dark"][data-capd-look="neon"] input[class*="inputStyles_"]:focus,
+html[data-capd="dark"][data-capd-look="neon"] button[class*="faceplate_"]:focus,
+html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][class*="button_"]:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-TextField-fieldGroup:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Dropdown-title:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-ComboBox:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Input:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Combobox:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-SpinButton:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-SearchBox:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Select__select:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Switch__indicator:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Checkbox__indicator:focus,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Radio__indicator:focus,
+html[data-capd="dark"][data-capd-look="neon"] input[class*="inputStyles_"]:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] button[class*="faceplate_"]:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][class*="button_"]:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-TextField-fieldGroup:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Dropdown-title:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-ComboBox:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Input:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Combobox:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-SpinButton:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-SearchBox:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Select__select:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Switch__indicator:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Checkbox__indicator:focus-within,
+html[data-capd="dark"][data-capd-look="neon"] .fui-Radio__indicator:focus-within {
+  border-color: var(--capd-neon-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.65), inset 0 0 5px rgba(0, 229, 255, 0.18) !important;
+}
+/* The chosen option of a button group (Justify / Align) lights up */
+html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][aria-checked="true"] {
+  background-color: rgba(255, 42, 138, 0.22) !important;
+  box-shadow: 0 0 12px rgba(255, 42, 138, 0.8), inset 0 0 6px rgba(255, 42, 138, 0.3) !important;
+}
+
+/* Text selection and caret in neon */
+html[data-capd="dark"][data-capd-look="neon"] .monaco-editor .cursors-layer .cursor { background-color: var(--capd-neon-cyan) !important; border-color: var(--capd-neon-cyan) !important; }

@@ -139,6 +139,30 @@ test('shorthands are left alone when their colour longhand has a real value or n
   assert.equal(rewriter.rewriteRules([fluent], ctx()), '', 'Fluent tokens stay with the static layer');
 });
 
+test("the page's own !important keeps beating its normal declarations inside the override layer", () => {
+  const base = styleRule('.root-345', { color: 'rgb(50, 49, 48)', 'background-color': 'rgb(255, 255, 255)' });
+  const cancel = styleRule('.propertyTitle_1kl7awd', { 'background-color': 'transparent' }, ['background-color']);
+  const css = rewriter.rewriteRules([base, cancel], ctx());
+  assert.match(css, /^\.root-345\{color:rgb\([^)]*\) !important;background-color:rgb\([^)]*\) !important;\}/);
+  assert.ok(css.endsWith('.propertyTitle_1kl7awd:not(#capd-i):not(#capd-i):not(#capd-i){background-color:transparent !important;}'),
+    're-asserted with a boost even though transparent needs no rewriting');
+  // a rewritten !important colour goes into the boosted rule too
+  const imp = rewriter.rewriteRules([styleRule('.x', { color: 'rgb(50, 49, 48)', 'border-top-color': 'rgb(200, 200, 200)' }, ['color'])], ctx());
+  assert.match(imp, /^\.x\{border-top-color:[^}]*\}\.x:not\(#capd-i\):not\(#capd-i\):not\(#capd-i\)\{color:rgb\([^)]*\) !important;\}$/);
+});
+
+test('the boost goes before pseudo-elements and onto every selector in a list', () => {
+  assert.equal(rewriter.boostSelector('.a::before, .b:hover .c, .d:after'),
+    '.a:not(#capd-i):not(#capd-i):not(#capd-i)::before, .b:hover .c:not(#capd-i):not(#capd-i):not(#capd-i), .d:not(#capd-i):not(#capd-i):not(#capd-i):after');
+  assert.equal(rewriter.boostSelector('input::-webkit-input-placeholder'), 'input:not(#capd-i):not(#capd-i):not(#capd-i)::-webkit-input-placeholder');
+});
+
+test('a text token used as a background is retargeted to its background variant', () => {
+  const isExcludedVar = (n, kind) => n.startsWith('--color') && !(kind === 'bg' && /Foreground/.test(n));
+  const css = rewriter.rewriteRules([styleRule('.root-251', { 'background-color': 'var(--colorNeutralForegroundInverted)', color: 'var(--colorNeutralForeground1)' })], ctx({ isExcludedVar }));
+  assert.equal(css, '.root-251{background-color:var(--capd-bg-colorNeutralForegroundInverted, var(--colorNeutralForegroundInverted)) !important;}');
+});
+
 test('splitSelectorList respects parentheses, brackets and strings', () => {
   assert.deepEqual(rewriter.splitSelectorList('a, b:not(.c, .d), [data-x="p,q"] e'), ['a', ' b:not(.c, .d)', ' [data-x="p,q"] e']);
 });

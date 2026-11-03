@@ -44,6 +44,13 @@
             <label><input type="radio" name="surface" value="black"><span>Black</span></label>
           </span>
         </div>
+        <div class="row" role="radiogroup" aria-labelledby="look-label">
+          <span class="row-text"><span class="row-title" id="look-label">Style</span><span class="row-hint">Classic keeps each product's own colours. Neon is a cyberpunk take: violet-black surfaces, hot-pink accents everywhere and cyan focus rings.</span></span>
+          <span class="segmented" data-key="look">
+            <label><input type="radio" name="look" value="classic"><span>Classic</span></label>
+            <label><input type="radio" name="look" value="neon"><span>Neon</span></label>
+          </span>
+        </div>
         <label class="row" for="contrast">
           <span class="row-text"><span class="row-title">High contrast text</span><span class="row-hint">Brighter text and stronger borders, targeting WCAG AAA. Turns on automatically when your OS asks for more contrast.</span></span>
           <input type="checkbox" id="contrast" role="switch" data-key="contrast" data-on="high" data-off="standard">
@@ -84,7 +91,7 @@
 
     <section class="about" aria-labelledby="about-label">
       <h2 id="about-label">About</h2>
-      <p>Version <span id="version">1.1.0</span>. This extension stores only its settings, collects nothing, and makes no network requests other than fetching the pages' own stylesheets.</p>
+      <p>Version <span id="version">1.2.0</span>. This extension stores only its settings, collects nothing, and makes no network requests other than fetching the pages' own stylesheets.</p>
       <p><button type="button" id="reset" class="secondary">Reset to defaults</button></p>
     </section>
   </main>

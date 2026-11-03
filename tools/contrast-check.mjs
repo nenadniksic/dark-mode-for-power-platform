@@ -21,16 +21,18 @@ const CONTRASTS = ['standard', 'high'];
 // Brand seeds the theme meets in practice: Power Apps Studio (the shipped
 // ramp), the Power Apps portal, Power Automate, and Fluent UI's default brand.
 const BRANDS = [null, '#742774', '#0066ff', '#0f6cbd'];
+// Styles: Classic with each brand, and Neon (which brings its own brand).
+const CASES = [...BRANDS.map((brand) => ({ look: 'classic', brand })), { look: 'neon', brand: null }];
 const hex = (c) => color.toHex(c);
 
 export function runChecks() {
   const failures = [];
   const report = [];
-  for (const brand of BRANDS) for (const surface of SURFACES) for (const contrast of CONTRASTS) {
+  for (const { look, brand } of CASES) for (const surface of SURFACES) for (const contrast of CONTRASTS) {
     CAPD.brandSeed = brand;
-    const label = brand ? `${surface}/${contrast}/${brand}` : `${surface}/${contrast}`;
-    const settings = { surface, contrast, backdrop: 'dark', iconAdapt: true };
-    const opts = { surface, contrast };
+    const label = `${surface}/${contrast}` + (brand ? `/${brand}` : '') + (look === 'neon' ? '/neon' : '');
+    const settings = { surface, contrast, backdrop: 'dark', iconAdapt: true, look };
+    const opts = { surface, contrast, look };
     const minText = contrast === 'high' ? 7 : 4.5;
     const tokens = Object.fromEntries(CAPD.staticTheme.tokenCSS(settings).match(/--[^:]+:[^;]+/g).map((d) => { const i = d.indexOf(':'); return [d.slice(0, i), d.slice(i + 1).replace('!important', '').trim()]; }));
     const t = (n) => color.parse(tokens['--' + n]);
@@ -76,7 +78,7 @@ export function runChecks() {
     }
     // generic mapping: common Studio text colours on the mapped white surface and the backdrop
     // (independent of the brand, so checked once per surface/contrast)
-    if (brand === null) {
+    if (brand === null) { // once per style
     const surfaceC = color.modify('bg', color.parse('#ffffff'), opts);
     const paper = color.modify('bg', color.parse('#fafafa'), opts);
     // menus, callouts and dialogs sit on the raised surface (--capd-raised)

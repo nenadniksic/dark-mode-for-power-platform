@@ -102,7 +102,17 @@
 
   /**
    * Produce the override declarations for one CSSStyleDeclaration-like
-   * object.  Returns an array of [prop, value, important] triples.
+   * object.  Returns [prop, value, important, pageImportant] tuples.
+   *
+   * Every override is !important (it has to beat the page's own rules), so
+   * the page's own !important no longer outranks its normal declarations
+   * inside the override layer.  Declarations the page marks !important are
+   * therefore flagged (pageImportant) and re-asserted even when their value
+   * needs no change (transparent, inherit...): rewriteRules emits them with
+   * a specificity boost so they keep winning, as they do in the page.
+   * Studio cancels a Fluent button's white background with its own
+   * `background-color: transparent !important`; without this the dark copy
+   * of the white won and every property label sat on a grey chip.
    */
   function rewriteDeclarations(style, ctx) {
     const out = [];
@@ -126,8 +136,10 @@
       }
       const kind = PROP_KIND[prop];
       if (!kind) continue;
+      const pageImportant = style.getPropertyPriority(prop) === 'important';
       const rewritten = color.rewriteValue(kind, value, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
-      if (rewritten && rewritten !== value) out.push([prop, rewritten, true]);
+      if (rewritten && rewritten !== value) out.push([prop, rewritten, true, pageImportant]);
+      else if (pageImportant) out.push([prop, value, true, true]);
     }
     // Shorthands declared with var(): their longhands read as empty above.
     for (const [shorthand, longhand, kind] of VAR_SHORTHANDS) {
@@ -135,8 +147,10 @@
       if (style.getPropertyValue(longhand)) continue; // longhand has a real value: handled above
       const value = style.getPropertyValue(shorthand);
       if (!value || value.indexOf('var(') === -1) continue;
+      const pageImportant = style.getPropertyPriority(shorthand) === 'important';
       const rewritten = color.rewriteValue(kind, value, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
-      if (rewritten && rewritten !== value) out.push([shorthand, rewritten, true]);
+      if (rewritten && rewritten !== value) out.push([shorthand, rewritten, true, pageImportant]);
+      else if (pageImportant) out.push([shorthand, value, true, true]);
     }
     return out;
   }
@@ -173,6 +187,20 @@
     return splitSelectorList(selectorText).map((sel) => sel.replace(ROOT_COMPOUND_RE, '$1:scope')).join(',');
   }
 
+  /* Three ID-level :not()s outrank any normal page selector in practice,
+     while keeping the relative order among the page's own !important rules. */
+  const IMPORTANT_BOOST = ':not(#capd-i):not(#capd-i):not(#capd-i)';
+  const PSEUDO_ELEMENT_RE = /((?:::?(?:before|after|first-line|first-letter)|::[\w-]+(?:\([^)]*\))?)+)\s*$/i;
+
+  /** The selector with the boost added to each compound that is matched (before any pseudo-element). */
+  function boostSelector(selectorText) {
+    return splitSelectorList(selectorText).map((sel) => {
+      const m = PSEUDO_ELEMENT_RE.exec(sel);
+      if (!m) return sel.replace(/\s*$/, '') + IMPORTANT_BOOST;
+      return sel.slice(0, m.index).replace(/\s*$/, '') + IMPORTANT_BOOST + m[1];
+    }).join(',');
+  }
+
   function serializeDecls(decls) {
     return decls.map(([p, v, imp]) => `${p}:${v}${imp ? ' !important' : ''};`).join('');
   }
@@ -199,7 +227,10 @@
           // (nested rules carry relative selectors and keep depth + 1)
           if (decls.length || inner) {
             const selector = ctx.scoped && depth === 0 ? scopeSelector(rule.selectorText) : rule.selectorText;
-            parts.push(`${selector}{${serializeDecls(decls)}${inner}}`);
+            const normal = decls.filter((d) => !d[3]);
+            const important = decls.filter((d) => d[3]);
+            if (normal.length || inner) parts.push(`${selector}{${serializeDecls(normal)}${inner}}`);
+            if (important.length) parts.push(`${boostSelector(selector)}{${serializeDecls(important)}}`);
           }
         } else if (type === 4 /* MEDIA_RULE */) {
           const inner = rewriteRules(rule.cssRules, ctx, depth);
@@ -257,5 +288,5 @@
     return `@scope (:root) to (${limitSelector}){${css}}`;
   }
 
-  return { PROP_KIND, KINDS, VAR_SHORTHANDS, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
+  return { PROP_KIND, KINDS, VAR_SHORTHANDS, boostSelector, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
 });

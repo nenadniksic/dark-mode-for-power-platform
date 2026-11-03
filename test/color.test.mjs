@@ -104,3 +104,18 @@ test('var() fallbacks are passed to the var rewriter', () => {
   const out = color.rewriteValue('fg', 'var(--a, #000)', undefined, (expr) => expr.replace('--a', '--capd-fg-a'));
   assert.equal(out, 'var(--capd-fg-a, #000)');
 });
+
+test('Neon tint changes hue and saturation of neutrals only, never their lightness', () => {
+  for (const hex of ['#ffffff', '#f3f2f1', '#323130', '#605e5c', '#c8c6c4']) {
+    for (const kind of ['bg', 'fg', 'bd']) {
+      const classic = color.toHsl(color.modify(kind, color.parse(hex)));
+      const neon = color.toHsl(color.modify(kind, color.parse(hex), { look: 'neon' }));
+      assert.ok(Math.abs(classic.l - neon.l) < 0.03, `${kind} ${hex}: ${classic.l} vs ${neon.l}`);
+    }
+  }
+  const surface = color.modify('bg', color.parse('#ffffff'), { look: 'neon' });
+  for (const hex of ['#000000', '#323130', '#605e5c']) {
+    const fg = color.modify('fg', color.parse(hex), { look: 'neon' });
+    assert.ok(color.contrast(fg, surface) >= 4.5, `${hex} text on the neon surface`);
+  }
+});

@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 — 2026-11-03
+
+### Added
+- Neon style (Style: Classic / Neon in the popup and options): a cyberpunk take with violet-black surfaces, faint pink-lavender text, a hot-pink accent everywhere (Power Automate included) and cyan focus rings, plus a pink glow on the Office header, primary buttons and selected tabs, and a neon edge on every bordered control (inputs, dropdowns, switches, checkboxes, option buttons) that brightens on hover, turns cyan on focus and lights up the chosen option. It combines with the Dim / Dark / Black surface and high-contrast settings, and passes the same WCAG gate.
+- Developer diagnostics can preview settings in a page until it reloads (`capd:override`), so styles can be compared without changing the saved settings.
+
+### Fixed
+- Property labels in Studio's properties pane sat on grey chips. Studio cancels a Fluent button's white background with its own `!important`; the theme's dark copy of the white outranked it. Declarations a page marks `!important` now keep beating its normal ones under the theme.
+- Studio's "+" insert button on an empty container was a dark disc with a dark purple plus over the light app. Studio's overlays on the canvas now keep their light look, like the canvas itself.
+- Studio's command-bar buttons were a shade darker than the bar: Studio paints them with a Fluent text token (`colorNeutralForegroundInverted`), whose dark value is a text colour. A text token used as a background is now mapped like a surface, so the buttons match the bar.
+
 ## 1.1.0 — 2026-11-03
 
 Power Automate support, and fixes found by a new rendered-page contrast audit.

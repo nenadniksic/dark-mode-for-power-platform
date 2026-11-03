@@ -95,7 +95,7 @@
     update(settings) {
       const first = !this.settings;
       this.settings = settings;
-      this.opts = { surface: settings.surface, contrast: settings.contrast, iconAdapt: settings.iconAdapt };
+      this.opts = { surface: settings.surface, contrast: settings.contrast, iconAdapt: settings.iconAdapt, look: settings.look };
       setHtmlAttrs(CAPD.staticTheme.htmlAttrs(settings));
       if (first) {
         document.addEventListener('capd:adopted', this.onAdopted, true);
@@ -189,9 +189,15 @@
 
   let engine = null;
 
+  /* Developer diagnostics can preview other settings in this page until it
+     reloads (capd:override); nothing is saved. */
+  let devOverride = null;
+  const OVERRIDABLE = ['look', 'surface', 'contrast', 'backdrop', 'iconAdapt'];
+
   function effective(settings) {
     const s = { ...settings };
     if (root.__capdSettings) Object.assign(s, root.__capdSettings); // standalone test harness
+    if (devOverride && settings.devDiagnostics) Object.assign(s, devOverride);
     if (s.contrast === 'standard' && mqContrast.matches) s.contrast = 'high';
     return s;
   }
@@ -209,7 +215,7 @@
     lastSettings = settings;
     const s = effective(settings);
     const on = shouldRun(s);
-    writeCache({ ...(readCache() || {}), active: on, attrs: CAPD.staticTheme.htmlAttrs(s), at: Date.now() });
+    if (!devOverride) writeCache({ ...(readCache() || {}), active: on, attrs: CAPD.staticTheme.htmlAttrs(s), at: Date.now() });
     if (on) {
       if (!engine) engine = new Engine();
       engine.update(s);
@@ -254,7 +260,9 @@
    *   { type: 'capd:inspect', x, y }  or  { type: 'capd:inspect', selector }
    * with the elements there and the colour rules that apply to them, and
    *   { type: 'capd:probe-css', css }
-   * by installing test CSS last in the page (an empty string removes it).
+   * by installing test CSS last in the page (an empty string removes it), and
+   *   { type: 'capd:override', settings: { look: 'neon' } }
+   * by previewing those settings in this page until it reloads (null clears).
    */
   let probeEl = null;
   function probeCSS(css) {
@@ -264,7 +272,7 @@
     document.documentElement.appendChild(probeEl);
     return { installed: probeEl.textContent.length };
   }
-  const BRIDGE_TYPES = { 'capd:audit': 'capd:audit-result', 'capd:inspect': 'capd:inspect-result', 'capd:probe-css': 'capd:probe-css-result' };
+  const BRIDGE_TYPES = { 'capd:audit': 'capd:audit-result', 'capd:inspect': 'capd:inspect-result', 'capd:probe-css': 'capd:probe-css-result', 'capd:override': 'capd:override-result' };
   window.addEventListener('message', (e) => {
     const d = e.data;
     if (!d || typeof d !== 'object' || !Object.prototype.hasOwnProperty.call(BRIDGE_TYPES, d.type)) return;
@@ -277,6 +285,12 @@
       if (d.type === 'capd:audit') result = !CAPD.active ? { inactive: true } : CAPD.audit ? CAPD.audit({ limit: Math.min(+d.limit || 40, 200) }) : { error: 'audit unavailable' };
       else if (!(lastSettings && lastSettings.devDiagnostics)) result = { error: 'Developer diagnostics is off (extension options)' };
       else if (d.type === 'capd:inspect') result = CAPD.inspect({ x: +d.x, y: +d.y, selector: typeof d.selector === 'string' ? d.selector : undefined, depth: +d.depth || 3, ancestors: Math.min(+d.ancestors || 0, 8), max: Math.min(+d.max || 3, 10) });
+      else if (d.type === 'capd:override') {
+        const o = d.settings && typeof d.settings === 'object' ? d.settings : null;
+        devOverride = o ? Object.fromEntries(OVERRIDABLE.filter((k) => k in o).map((k) => [k, o[k]])) : null;
+        apply(lastSettings);
+        result = { override: devOverride, look: CAPD.staticTheme.htmlAttrs(effective(lastSettings))['data-capd-look'] };
+      }
       else result = probeCSS(typeof d.css === 'string' ? d.css : '');
     } catch (err) { result = { error: String((err && err.message) || err) }; }
     try { e.source.postMessage({ type: BRIDGE_TYPES[d.type], id: d.id, role, frame: location.origin + location.pathname, result }, e.origin); } catch (err) { /* ignore */ }

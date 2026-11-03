@@ -6,7 +6,7 @@
   'use strict';
   const CAPD = (root.CAPD = root.CAPD || {});
 
-  CAPD.VERSION = '1.1.0';
+  CAPD.VERSION = '1.2.0';
   CAPD.ATTR = 'data-capd';                 // on <html>: "dark" while active
   CAPD.INLINE_ATTR = 'data-capd-inline';   // on elements whose inline colours were adapted
   CAPD.REV_ATTR = 'data-capd-rev';         // set by the MAIN-world CSSOM hook on <style>/<link>
@@ -26,11 +26,18 @@
   ].join(', ');
 
   /**
-   * Subtrees the theme must never recolour: the app being designed, and
-   * colour previews.  Used as the `to (...)` limit of every @scope block and
-   * by the inline processor.
+   * Studio affordances drawn over the app canvas keep their light look, so
+   * they read against the (light) app: the "+" insert button on an empty
+   * container was a dark disc with a dark purple plus.
    */
-  CAPD.CANVAS_LIMIT_SELECTOR = '#publishedCanvas, .app-canvas, [data-capd-keep], ' + CAPD.TRUE_COLOR_SELECTOR;
+  CAPD.CANVAS_OVERLAY_SELECTOR = '[id^="insertAffordance"]';
+
+  /**
+   * Subtrees the theme must never recolour: the app being designed, Studio's
+   * overlays on it, and colour previews.  Used as the `to (...)` limit of
+   * every @scope block and by the inline processor.
+   */
+  CAPD.CANVAS_LIMIT_SELECTOR = '#publishedCanvas, .app-canvas, [data-capd-keep], ' + CAPD.CANVAS_OVERLAY_SELECTOR + ', ' + CAPD.TRUE_COLOR_SELECTOR;
 
   /** Properties whose values are colours, grouped by the role of the colour. */
   CAPD.PROP_KIND = {

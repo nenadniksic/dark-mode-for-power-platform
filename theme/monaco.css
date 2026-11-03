@@ -19,6 +19,6 @@ html[data-capd="dark"] .monaco-editor .context-view,
 html[data-capd="dark"] .monaco-editor .find-widget { background-color: var(--capd-raised) !important; border-color: var(--capd-b2) !important; color: var(--capd-t1) !important; box-shadow: var(--capd-shadow) !important; }
 html[data-capd="dark"] .monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused { background-color: var(--capd-accent-soft-strong) !important; }
 html[data-capd="dark"] .monaco-editor .suggest-widget .monaco-list .monaco-list-row:hover:not(.focused) { background-color: rgba(255, 255, 255, 0.06) !important; }
-html[data-capd="dark"] .monaco-editor .scrollbar .slider { background-color: rgba(255, 255, 255, 0.18) !important; }
-html[data-capd="dark"] .monaco-editor .scrollbar .slider:hover { background-color: rgba(255, 255, 255, 0.30) !important; }
+html[data-capd="dark"] .monaco-editor .scrollbar .slider { background-color: var(--capd-scroll) !important; }
+html[data-capd="dark"] .monaco-editor .scrollbar .slider:hover { background-color: var(--capd-scroll-hover) !important; }
 html[data-capd="dark"] .monaco-editor .squiggly-error { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 3' enable-background='new 0 0 6 3' height='3' width='6'%3E%3Cg fill='%23f48771'%3E%3Cpolygon points='5.5,0 2.5,3 1.1,3 4.1,0'/%3E%3Cpolygon points='4,0 6,2 6,0.6 5.4,0'/%3E%3Cpolygon points='0,2 1,3 2.4,3 0,0.6'/%3E%3C/g%3E%3C/svg%3E") repeat-x bottom left !important; }
