@@ -27,6 +27,10 @@
       if (/\/canvas(\/|$)/.test(path)) return isTop ? 'studio-host' : 'maker-frame';
       return isTop ? 'maker' : 'maker-frame';
     }
+    // Power Automate: its own portal and designer, and the Flows pages the
+    // Power Apps portal embeds from it (an iframe named widgetIFrame).
+    const automateHost = /^make(\.preview|\.test)?\.powerautomate\.(com|cn)$/.test(host) || /^make\.(gov|high)\.powerautomate\.us$/.test(host) || /(^|\.)flow\.microsoft\.com$/.test(host);
+    if (automateHost) return isTop ? 'automate' : 'automate-frame';
     if (host === 'apps.powerapps.com' || /^apps\./.test(host) || /\/play\//.test(path) || /webplayer|iframeapp|\/player\//i.test(path)) return 'player';
     if (/^authoring\./.test(host) || /\.gateway\.prod\.island\.powerapps\./.test(host) || window.name === 'EmbeddedStudio' || window.name === 'preloadStudio' || /\/embed\/?$/.test(path)) return 'studio';
     try {
@@ -38,6 +42,8 @@
 
   const role = detectRole();
   CAPD.role = role;
+  /** Roles the "Maker portal pages" setting switches off (Studio is always themed). */
+  const PORTAL_ROLES = new Set(['maker', 'maker-frame', 'automate', 'automate-frame']);
   if (role === 'none' || role === 'player') return;
 
   /* ---------------------------------------------------------------- */
@@ -68,6 +74,9 @@
 
   const cached = readCache();
   if (cached && cached.active && cached.attrs) { setHtmlAttrs(cached.attrs); setFallback(true); }
+  // The page's brand colour from the last visit, so the first paint already
+  // uses it (Power Automate is blue, not Power Apps purple).
+  if (cached && typeof cached.brand === 'string') CAPD.brandSeed = cached.brand;
 
   /* ---------------------------------------------------------------- */
   /* Engine                                                           */
@@ -78,6 +87,8 @@
       this.settings = null;
       this.opts = null;
       this.onAdopted = () => { for (const t of this.trees.values()) t.sm.scan(); };
+      this.onBrand = (value, id) => this.adoptBrand(value, id);
+      this.brandFrom = 0;
       this.onShadow = (e) => { const r = e.target && e.target.shadowRoot; if (r) this.manage(r); };
     }
 
@@ -100,7 +111,25 @@
 
     managerOptions(target) {
       const isDoc = target === document;
-      return { opts: this.opts, isExcludedVar: CAPD.staticTheme.isExcludedVar, limitSelector: isDoc ? CAPD.CANVAS_LIMIT_SELECTOR : null };
+      return { opts: this.opts, isExcludedVar: CAPD.staticTheme.isExcludedVar, limitSelector: isDoc ? CAPD.CANVAS_LIMIT_SELECTOR : null, onBrand: this.onBrand };
+    }
+
+    /**
+     * A FluentProvider declared its brand.  The root provider (the lowest
+     * number, fui-FluentProvider1) decides; nested providers for callouts or
+     * Copilot panes do not repaint the whole page.
+     */
+    adoptBrand(value, id) {
+      const n = parseInt(String(id).replace(/^\D+/, ''), 10) || 1;
+      if (this.brandFrom && this.brandFrom < n) return;
+      const c = CAPD.color.parse(value);
+      if (!c) return;
+      this.brandFrom = n;
+      const seed = CAPD.color.toHex(c);
+      if (seed === CAPD.brandSeed) return;
+      CAPD.brandSeed = seed;
+      writeCache({ ...(readCache() || {}), brand: seed });
+      for (const [target, t] of this.trees) this.installCSS(target, t);
     }
 
     manage(target) {
@@ -171,14 +200,16 @@
     if (!s.enabled) return false;
     if (mqForced.matches) return false;                       // Windows High Contrast owns the colours
     if (s.mode === 'system' && !mqDark.matches) return false;
-    if ((role === 'maker' || role === 'maker-frame') && !s.makerPortal) return false;
+    if (PORTAL_ROLES.has(role) && !s.makerPortal) return false;
     return true;
   }
 
+  let lastSettings = null;
   function apply(settings) {
+    lastSettings = settings;
     const s = effective(settings);
     const on = shouldRun(s);
-    writeCache({ active: on, attrs: CAPD.staticTheme.htmlAttrs(s), at: Date.now() });
+    writeCache({ ...(readCache() || {}), active: on, attrs: CAPD.staticTheme.htmlAttrs(s), at: Date.now() });
     if (on) {
       if (!engine) engine = new Engine();
       engine.update(s);
@@ -204,6 +235,52 @@
     CAPD.active = false;
     CAPD.booted = false;
   };
+
+  /*
+   * Diagnostics bridge.  Studio and the Flows pages run in cross-origin
+   * frames, where the console needs a context switch to reach CAPD.audit().
+   * The maker page that embeds a frame (or a maker page itself) can request
+   * the audit by message instead:
+   *   frames[0].postMessage({ type: 'capd:audit' }, '*')     // a framed page
+   *   postMessage({ type: 'capd:audit' }, location.origin)   // this page
+   * and receives { type: 'capd:audit-result', role, frame, result }.  Only
+   * the direct parent or the page itself is answered, only on a Power Apps
+   * or Power Automate maker origin, and only with style diagnostics.
+   */
+  const MAKER_ORIGIN_RE = /^https:\/\/make(\.preview|\.test)?\.(powerapps|powerautomate)\.(com|cn)$|^https:\/\/make\.(gov|high)\.(powerapps|powerautomate)\.us$|^https:\/\/make\.apps\.appsplatform\.us$/;
+  /*
+   * With "Developer diagnostics" switched on in the options page (off by
+   * default), the same bridge also answers
+   *   { type: 'capd:inspect', x, y }  or  { type: 'capd:inspect', selector }
+   * with the elements there and the colour rules that apply to them, and
+   *   { type: 'capd:probe-css', css }
+   * by installing test CSS last in the page (an empty string removes it).
+   */
+  let probeEl = null;
+  function probeCSS(css) {
+    if (!css) { if (probeEl) { probeEl.remove(); probeEl = null; } return { removed: true }; }
+    if (!probeEl) { probeEl = document.createElement('style'); probeEl.setAttribute(CAPD.STYLE_ATTR, 'probe'); }
+    probeEl.textContent = String(css);
+    document.documentElement.appendChild(probeEl);
+    return { installed: probeEl.textContent.length };
+  }
+  const BRIDGE_TYPES = { 'capd:audit': 'capd:audit-result', 'capd:inspect': 'capd:inspect-result', 'capd:probe-css': 'capd:probe-css-result' };
+  window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (!d || typeof d !== 'object' || !Object.prototype.hasOwnProperty.call(BRIDGE_TYPES, d.type)) return;
+    if (!MAKER_ORIGIN_RE.test(e.origin)) return;
+    const fromParent = window.parent !== window && e.source === window.parent;
+    const fromSelf = e.source === window && e.origin === location.origin;
+    if (!fromParent && !fromSelf) return;
+    let result;
+    try {
+      if (d.type === 'capd:audit') result = !CAPD.active ? { inactive: true } : CAPD.audit ? CAPD.audit({ limit: Math.min(+d.limit || 40, 200) }) : { error: 'audit unavailable' };
+      else if (!(lastSettings && lastSettings.devDiagnostics)) result = { error: 'Developer diagnostics is off (extension options)' };
+      else if (d.type === 'capd:inspect') result = CAPD.inspect({ x: +d.x, y: +d.y, selector: typeof d.selector === 'string' ? d.selector : undefined, depth: +d.depth || 3, ancestors: Math.min(+d.ancestors || 0, 8), max: Math.min(+d.max || 3, 10) });
+      else result = probeCSS(typeof d.css === 'string' ? d.css : '');
+    } catch (err) { result = { error: String((err && err.message) || err) }; }
+    try { e.source.postMessage({ type: BRIDGE_TYPES[d.type], id: d.id, role, frame: location.origin + location.pathname, result }, e.origin); } catch (err) { /* ignore */ }
+  });
 
   // Console helpers for diagnostics: CAPD.stats() in the frame's console.
   CAPD.stats = () => {

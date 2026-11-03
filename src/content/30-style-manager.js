@@ -200,6 +200,8 @@
       }
       rec.signature = this.signature(sheet);
       if (sheet.disabled) { rec.el.textContent = ''; return; }
+      const owner = sheet.ownerNode;
+      if (this.options.onBrand && owner && owner.id && owner.id.indexOf('fui-FluentProvider') === 0) this.readBrand(sheet, owner.id);
       const ctx = this.ctx();
       let css = null;
       try {
@@ -217,6 +219,18 @@
       if (rec.el.textContent !== text) rec.el.textContent = text;
       this.stats.sheets++;
       this.stats.ms += performance.now() - t0;
+    }
+
+    /** Report a Fluent v9 provider's light brand colour (its theme's step 80) to the engine. */
+    readBrand(sheet, id) {
+      try {
+        const rules = sheet.cssRules;
+        for (let i = 0; i < rules.length; i++) {
+          const st = rules[i].style;
+          const v = st && st.getPropertyValue('--colorBrandBackground');
+          if (v && v.trim()) { this.options.onBrand(v.trim(), id); return; }
+        }
+      } catch (e) { /* unreadable sheet: keep the current brand */ }
     }
 
     async processForeign(sheet, rec, url, media, append) {
@@ -243,6 +257,12 @@
     /**
      * Keep our elements last, in the order: static, page-sheet overrides in
      * page order, inline rules.  Cheap when nothing moved.
+     *
+     * Another copy of the engine on the same page (the extension installed
+     * twice, say from the store and unpacked, or the standalone test bundle)
+     * keeps its own elements last as well.  Its elements are tolerated in the
+     * tail: if each engine insisted on following the other, every append
+     * would trigger the other's observer and the two would re-append forever.
      */
     ensureOrder() {
       if (this.disposed) return;
@@ -255,13 +275,23 @@
       if (this.tunedEl) wanted.push(this.tunedEl);
       if (this.inlineEl) wanted.push(this.inlineEl);
       if (!wanted.length) return;
-      const kids = this.container.childNodes;
-      let ok = true;
-      let idx = kids.length - wanted.length;
-      if (idx < 0) ok = false;
-      else for (let i = 0; i < wanted.length; i++) if (kids[idx + i] !== wanted[i]) { ok = false; break; }
-      if (ok) return;
+      if (this.inOrder(wanted)) return;
       for (const el of wanted) this.container.appendChild(el);
+    }
+
+    /** True when `wanted` ends the container in order, allowing only other engines' elements in between. */
+    inOrder(wanted) {
+      const mine = new Set(wanted);
+      const kids = this.container.childNodes;
+      let w = wanted.length - 1;
+      for (let i = kids.length - 1; i >= 0 && w >= 0; i--) {
+        const k = kids[i];
+        if (k === wanted[w]) { w--; continue; }
+        if (mine.has(k)) return false;   // one of ours, out of order
+        if (k.nodeType === 1 && k.getAttribute && k.getAttribute(CAPD.STYLE_ATTR)) continue; // another engine's
+        return false;                    // a page node sits among ours
+      }
+      return w < 0;
     }
 
     /** Regenerate everything (settings changed). */

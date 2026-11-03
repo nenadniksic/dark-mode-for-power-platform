@@ -35,6 +35,18 @@ html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-TextField:focus::after { o
 /* ---- images: keep photos, avatars and logos as they are ----------------- */
 html[data-capd="dark"] img { filter: none !important; }
 
+/* ---- SVG icons that rely on SVG's default black fill -------------------
+   Icons registered with Fluent as raw SVG markup (Studio's layout glyphs in
+   the properties pane, the Media pane's Upload icon, the portal's Power
+   Platform icon) carry no fill anywhere: no attribute, no inline style, no
+   rule.  They paint in SVG's initial value, black, which was invisible as a
+   problem on a light surface and is invisible as an icon on a dark one.
+   Give such roots a currentColor fill: the text colour around them is
+   already themed, and shapes with a fill of their own keep it, because
+   inheritance only fills the gaps.  :where() keeps the specificity at a
+   bare type selector, so any fill a page rule sets still wins. */
+:where(html[data-capd="dark"]) svg:where(:not([fill]):not([style*="fill"])) { fill: currentColor; }
+
 /* ---- text selection ----------------------------------------------------- */
 html[data-capd="dark"] ::selection { background-color: var(--capd-selection) !important; color: #ffffff !important; }
 

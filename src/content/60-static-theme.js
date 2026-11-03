@@ -17,7 +17,56 @@
   const rewriter = CAPD.rewriter;
 
   const GREY_OFFSET = { dim: 4, dark: 0, black: -6 };
-  const BRAND = () => CAPD.FLUENT_BRAND || {};
+
+  /*
+   * Brand ramp.  The generated tokens refer to brand steps (b70, b100...),
+   * resolved here.  The shipped ramp is Power Apps purple, recovered from
+   * Studio's light tokens; Power Automate brands its UI blue (#0066ff).  The
+   * engine reads the root FluentProvider's light --colorBrandBackground (the
+   * ramp's step 80) and sets CAPD.brandSeed, so each product keeps its own
+   * accent colour in the dark theme instead of every page turning purple.
+   */
+  const SHIPPED_BRAND = () => CAPD.FLUENT_BRAND || {};
+  const rampCache = new Map();
+
+  /** Brand ramp (steps 10..160) with `seed` at step 80, shaped like `template` (default: the shipped ramp). */
+  function rampFromSeed(seedStr, template) {
+    const base = template || SHIPPED_BRAND();
+    const seed = color.parse(seedStr || '');
+    const b80 = color.parse(base[80] || '');
+    if (!seed || !b80) return null;
+    if (seed.r === b80.r && seed.g === b80.g && seed.b === b80.b) return base; // Power Apps: the exact ramp
+    const S = color.toHsl(seed), T = color.toHsl(b80);
+    const out = {};
+    for (const key of Object.keys(base)) {
+      const step = +key;
+      if (step === 80) { out[key] = color.toHex(seed); continue; }
+      const t = color.toHsl(color.parse(base[key]));
+      // Scale the template's lightness curve so step 80 lands on the seed,
+      // keeping both ends of the ramp where the template has them.  The
+      // light half is what the dark theme writes and draws with (links,
+      // selected tabs, checkbox borders), so it never gets darker than the
+      // validated template, whatever the seed: a dark seed such as the
+      // portal's #742774 would otherwise give strokes below 3:1.
+      let l = step < 80 ? t.l * (S.l / T.l) : Math.max(t.l, S.l + (t.l - T.l) * ((1 - S.l) / (1 - T.l)));
+      l = Math.max(0.04, Math.min(0.97, l));
+      const s = Math.max(0, Math.min(1, T.s ? S.s * (t.s / T.s) : S.s));
+      out[key] = color.toHex(color.fromHsl(S.h, s, l));
+    }
+    return out;
+  }
+
+  function BRAND() {
+    const seed = CAPD.brandSeed;
+    if (!seed) return SHIPPED_BRAND();
+    if (!rampCache.has(seed)) rampCache.set(seed, rampFromSeed(seed) || SHIPPED_BRAND());
+    return rampCache.get(seed);
+  }
+
+  function withAlpha(hex, a) {
+    const c = color.parse(hex);
+    return c ? `rgba(${c.r}, ${c.g}, ${c.b}, ${a})` : `rgba(188, 95, 188, ${a})`;
+  }
 
   function greyHex(n) {
     const v = Math.max(0, Math.min(255, Math.round(Math.max(0, Math.min(100, n)) * 2.55)));
@@ -28,8 +77,11 @@
     const off = GREY_OFFSET[settings.surface] || 0;
     const high = settings.contrast === 'high';
     if (n < 50) {            // surfaces and strokes follow the surface preference
+      // Strokes are the ramp's 24 and up; judge that before the surface
+      // offset, or Dim's lighter surfaces (20 + 4) would be bumped as strokes.
+      const stroke = n >= 24;
       n += off;
-      if (high && n >= 24) n += 6;   // stronger strokes
+      if (high && stroke) n += 6;    // stronger strokes
     } else if (high) {
       n = Math.min(100, n + 8);      // brighter text
     }
@@ -78,17 +130,24 @@
 
   const FG_TOKEN_RE = /Foreground(\d|Link|$)/;
   const FG_TOKEN_SKIP_RE = /Inverted|OnBrand|OnLight|Static|Disabled|Placeholder/;
+  /* Brand strokes that mark state on the surface (selected outlines, checked
+     boxes and radios) are UI graphics: WCAG 1.4.11 wants 3:1. */
+  const BRAND_STROKE_RE = /^colorBrandStroke1$|^colorCompoundBrandStroke/;
 
   function tokenCSS(settings) {
     const spec = CAPD.FLUENT_DARK_SPEC || {};
     const opts = { surface: settings.surface, contrast: settings.contrast };
     const decls = [];
-    const surface = color.parse(resolveSpec(spec.colorNeutralBackground1 || 'g16', settings));
+    // Text tokens must read on the lightest surface text commonly sits on:
+    // cards and raised panels (g20), not just the base surface (g16).
+    const surface = color.parse(resolveSpec(spec.colorNeutralCardBackground || 'g20', settings));
     for (const name of Object.keys(spec)) {
       let value = resolveSpec(spec[name], settings);
-      // Guarantee legibility of coloured text tokens (brand, status, palette)
-      // on the base surface: WCAG AA for text, regardless of the brand ramp.
-      if (FG_TOKEN_RE.test(name) && !FG_TOKEN_SKIP_RE.test(name)) value = ensureContrast(value, surface, 4.5);
+      // Guarantee legibility of coloured text tokens (brand, status, palette):
+      // WCAG AA for text, regardless of the brand ramp.
+      // Neutral text targets AAA in high-contrast mode, as the setting promises.
+      if (FG_TOKEN_RE.test(name) && !FG_TOKEN_SKIP_RE.test(name)) value = ensureContrast(value, surface, settings.contrast === 'high' && /^colorNeutralForeground/.test(name) ? 7 : 4.5);
+      else if (BRAND_STROKE_RE.test(name)) value = ensureContrast(value, surface, 3);
       decls.push(`--${name}:${value} !important;`);
     }
     for (const [name, lightValue] of Object.entries(surfaceLight)) {
@@ -110,6 +169,10 @@
     const off = GREY_OFFSET[settings.surface] || 0;
     const brand = BRAND();
     const lightBackdrop = settings.backdrop === 'light';
+    // Coloured text has to read on raised surfaces (menus, callouts, dialogs),
+    // the lightest ones text sits on; that implies the base surface too.
+    const raised = greyHex(adjustGrey(20, settings));
+    const onRaised = (value) => ensureContrast(value, color.parse(raised), 4.5);
     const vars = {
       's0': map('bg', '#e0e0e0'),
       's1': map('bg', '#ffffff'),
@@ -117,28 +180,31 @@
       's3': map('bg', '#f3f2f1'),
       's4': map('bg', '#edebe9'),
       's5': map('bg', '#e1dfdd'),
-      'raised': greyHex(adjustGrey(20, settings)),
+      'raised': raised,
       't1': map('fg', '#323130'),
       't2': map('fg', '#605e5c'),
       't3': map('fg', '#a19f9d'),
       'b1': map('bd', '#edebe9'),
       'b2': map('bd', '#c8c6c4'),
       'b3': map('bd', '#8a8886'),
-      'accent': ensureContrast(brand[100] || '#bc5fbc', color.parse(map('bg', '#ffffff')), 4.5),
-      'accent-hover': ensureContrast(brand[110] || '#cb79cb', color.parse(map('bg', '#ffffff')), 4.5),
+      'accent': onRaised(brand[100] || '#bc5fbc'),
+      'accent-hover': onRaised(brand[110] || '#cb79cb'),
       'accent-bg': brand[70] || '#852985',
       'accent-bg-hover': brand[80] || '#933493',
-      'accent-soft': 'rgba(188, 95, 188, 0.18)',
-      'accent-soft-strong': 'rgba(188, 95, 188, 0.30)',
+      'accent-bg-pressed': brand[40] || '#641264',
+      'accent-soft': withAlpha(brand[100] || '#bc5fbc', 0.18),
+      'accent-soft-strong': withAlpha(brand[100] || '#bc5fbc', 0.30),
+      'accent-match': withAlpha(brand[100] || '#bc5fbc', 0.25),
+      'accent-match-border': withAlpha(brand[100] || '#bc5fbc', 0.6),
       'focus': settings.contrast === 'high' ? '#ffffff' : '#f5f5f5',
       'backdrop': lightBackdrop ? '#fafafa' : greyHex(Math.max(4, 10 + off)),
       'dot': lightBackdrop ? '#dcdcdc' : greyHex(Math.max(14, 24 + off)),
       'shadow': '0 2px 8px rgba(0, 0, 0, 0.45), 0 0 2px rgba(0, 0, 0, 0.35)',
-      'selection': 'rgba(188, 95, 188, 0.35)',
-      'link': ensureContrast(brand[110] || '#cb79cb', color.parse(map('bg', '#ffffff')), 4.5),
-      'danger': ensureContrast('#f1707b', color.parse(map('bg', '#ffffff')), 4.5),
-      'success': ensureContrast('#6ccb5f', color.parse(map('bg', '#ffffff')), 4.5),
-      'warning': ensureContrast('#f8c450', color.parse(map('bg', '#ffffff')), 4.5),
+      'selection': withAlpha(brand[100] || '#bc5fbc', 0.35),
+      'link': onRaised(brand[110] || '#cb79cb'),
+      'danger': onRaised('#f1707b'),
+      'success': onRaised('#6ccb5f'),
+      'warning': onRaised('#f8c450'),
     };
     return `:root{${Object.entries(vars).map(([k, v]) => `--capd-${k}:${v};`).join('')}}`;
   }
@@ -153,12 +219,24 @@
   function buildTuned(settings, role, scope) {
     const t = CAPD.themeCSS || {};
     let css = (t.studio || '') + (t.monaco || '') + (t.fluent8 || '');
-    if (role === 'maker' || role === 'maker-frame' || role === 'studio-host') css += t.maker || '';
+    if (role === 'maker' || role === 'maker-frame' || role === 'studio-host' || role === 'automate' || role === 'automate-frame') css += t.maker || '';
+    if (role === 'automate' || role === 'automate-frame') css += t.automate || '';
     return rewriter.scoped(css, scope ? LIMIT() : null);
   }
 
-  function buildInline(scope) {
-    return rewriter.scoped(CAPD.InlineProcessor.css, scope ? LIMIT() : null);
+  /*
+   * The inline rules are deliberately NOT wrapped in the canvas @scope.
+   * Studio draws many icons as <svg><use href="#symbol"> into a hidden
+   * sprite, and the browser renders each <use> as a copy of the symbol in a
+   * shadow tree, outside any @scope rooted at <html>: scoped rules never
+   * reach the copies, so a sprite's fill="black" stayed black on dark
+   * buttons (the Justify / Align buttons in the properties pane).  The rules
+   * only act on elements carrying data-capd-inline, which the inline
+   * processor never sets inside the designer canvas, so the canvas stays
+   * untouched without the scope.
+   */
+  function buildInline() {
+    return CAPD.InlineProcessor.css;
   }
 
   function htmlAttrs(settings) {
@@ -171,5 +249,5 @@
     };
   }
 
-  CAPD.staticTheme = { resolveSpec, ensureContrast, tokenCSS, paletteVars, buildStatic, buildTuned, buildInline, htmlAttrs, isExcludedVar, greyHex };
+  CAPD.staticTheme = { resolveSpec, ensureContrast, tokenCSS, paletteVars, buildStatic, buildTuned, buildInline, htmlAttrs, isExcludedVar, greyHex, rampFromSeed, brand: BRAND };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

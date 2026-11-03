@@ -1,11 +1,12 @@
 /* ==========================================================================
    make.powerapps.com shell (Office header, left navigation, home page).
-   The header keeps its brand purple; everything else follows the palette.
+   The header keeps the product's brand colour; everything else follows the
+   palette.  Also loaded on Power Automate, which shares the Office header.
    ========================================================================== */
 html[data-capd="dark"] body { background-color: var(--capd-s0) !important; }
 
 /* Office suite header: a uniform near-black bar with white text and the
-   brand purple kept for hover / pressed states, like Microsoft's own dark
+   brand colour kept for hover / pressed states, like Microsoft's own dark
    header.  The shell paints its buttons black and its regions purple, which
    reads as patchwork on a dark page. */
 html[data-capd="dark"] #o365header,
@@ -17,7 +18,7 @@ html[data-capd="dark"] #O365_HeaderLeftRegion { background-color: #141414 !impor
 html[data-capd="dark"] .o365cs-base .o365sx-button:hover,
 html[data-capd="dark"] .o365cs-base .o365sx-button:focus-visible,
 html[data-capd="dark"] .o365cs-base .o365sx-waffle:hover { background-color: var(--capd-accent-bg) !important; }
-html[data-capd="dark"] .o365cs-base .o365sx-button:active { background-color: #641264 !important; }
+html[data-capd="dark"] .o365cs-base .o365sx-button:active { background-color: var(--capd-accent-bg-pressed) !important; }
 html[data-capd="dark"] #O365_AppName,
 html[data-capd="dark"] #O365_AppName * ,
 html[data-capd="dark"] #ppuxOfficeHeaderBranding_container * { color: #ffffff !important; }

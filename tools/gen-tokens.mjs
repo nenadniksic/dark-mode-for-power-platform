@@ -83,7 +83,14 @@ const dark = {
   colorCompoundBrandBackground: 'b100', colorCompoundBrandBackgroundHover: 'b110', colorCompoundBrandBackgroundPressed: 'b90',
   colorBrandBackgroundStatic: 'b80', colorBrandBackground2: 'b20', colorBrandBackground2Hover: 'b40', colorBrandBackground2Pressed: 'b10',
   colorBrandBackground3Static: 'b60', colorBrandBackground4Static: 'b40',
-  colorBrandBackgroundInverted: 'white', colorBrandBackgroundInvertedHover: 'b160', colorBrandBackgroundInvertedPressed: 'b140', colorBrandBackgroundInvertedSelected: 'b150',
+  // Fluent keeps the inverted brand surfaces light (b160/b140/b150) in its
+  // dark theme too, for dark "inverted" text.  Power Automate paints its
+  // filter pills with colorBrandBackgroundInvertedSelected and writes on them
+  // with colorNeutralForeground1, which is white here, so the pill came out
+  // white on pink (1.4:1).  Mid-brand surfaces keep white text legible on
+  // them, and nothing in Studio or Power Automate pairs them with the dark
+  // inverted foregrounds (checked with CAPD.audit()).
+  colorBrandBackgroundInverted: 'white', colorBrandBackgroundInvertedHover: 'b70', colorBrandBackgroundInvertedPressed: 'b50', colorBrandBackgroundInvertedSelected: 'b60',
   colorNeutralCardBackground: 'g20', colorNeutralCardBackgroundHover: 'g24', colorNeutralCardBackgroundPressed: 'g18', colorNeutralCardBackgroundSelected: 'g22', colorNeutralCardBackgroundDisabled: 'g8',
   colorNeutralStrokeAccessible: 'g68', colorNeutralStrokeAccessibleHover: 'g74', colorNeutralStrokeAccessiblePressed: 'g70', colorNeutralStrokeAccessibleSelected: 'b100',
   colorNeutralStroke1: 'g40', colorNeutralStroke1Hover: 'g46', colorNeutralStroke1Pressed: 'g42', colorNeutralStroke1Selected: 'g44',

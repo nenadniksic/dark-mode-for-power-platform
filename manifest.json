@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Canvas Studio Dark Mode",
   "short_name": "Studio Dark",
-  "version": "1.0.0",
-  "description": "A carefully crafted dark theme for Power Apps canvas Studio and the maker portal. Your app's canvas stays exactly as you designed it.",
+  "version": "1.1.0",
+  "description": "A carefully crafted dark theme for Power Apps Studio, the maker portal and Power Automate. Your app's canvas stays as designed.",
   "minimum_chrome_version": "120",
   "icons": {
     "16": "icons/icon16.png",
@@ -33,7 +33,11 @@
     "https://*.powerapps.com/*",
     "https://*.powerapps.us/*",
     "https://*.appsplatform.us/*",
-    "https://*.powerapps.cn/*"
+    "https://*.powerapps.cn/*",
+    "https://*.powerautomate.com/*",
+    "https://*.powerautomate.us/*",
+    "https://*.powerautomate.cn/*",
+    "https://*.flow.microsoft.com/*"
   ],
   "commands": {
     "toggle-dark-mode": {
@@ -47,7 +51,11 @@
         "https://*.powerapps.com/*",
         "https://*.powerapps.us/*",
         "https://*.appsplatform.us/*",
-        "https://*.powerapps.cn/*"
+        "https://*.powerapps.cn/*",
+        "https://*.powerautomate.com/*",
+        "https://*.powerautomate.us/*",
+        "https://*.powerautomate.cn/*",
+        "https://*.flow.microsoft.com/*"
       ],
       "js": ["src/main-world/cssom-hooks.js"],
       "run_at": "document_start",
@@ -61,7 +69,11 @@
         "https://*.powerapps.com/*",
         "https://*.powerapps.us/*",
         "https://*.appsplatform.us/*",
-        "https://*.powerapps.cn/*"
+        "https://*.powerapps.cn/*",
+        "https://*.powerautomate.com/*",
+        "https://*.powerautomate.us/*",
+        "https://*.powerautomate.cn/*",
+        "https://*.flow.microsoft.com/*"
       ],
       "js": [
         "src/shared/settings.js",
@@ -74,6 +86,7 @@
         "src/content/40-inline.js",
         "src/content/50-dom-observer.js",
         "src/content/60-static-theme.js",
+        "src/content/70-audit.js",
         "src/content/90-main.js"
       ],
       "run_at": "document_start",

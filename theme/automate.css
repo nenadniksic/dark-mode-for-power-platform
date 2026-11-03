@@ -1,0 +1,15 @@
+/* ==========================================================================
+   Power Automate (make.powerautomate.com) and the Flows pages it provides
+   to the Power Apps portal.  The Fluent tokens (in Power Automate's own blue
+   brand) and the generated overrides do most of the work; these rules cover
+   what a colour mapping cannot.
+   ========================================================================== */
+html[data-capd="dark"] body { background-color: var(--capd-s0) !important; }
+
+/* Home page hero: a light decorative artwork (heroBannerExp.svg) sits behind
+   the greeting, which is light text in the dark theme.  Drop the art and let
+   the surface show, as on the Power Apps home page.  The hero is the block
+   that holds the left / content / right columns. */
+html[data-capd="dark"] [data-automation-id="authHomePage"] div:has(> [class*="left-"]):has(> [class*="content-"]):has(> [class*="right-"]) {
+  background-image: none !important;
+}

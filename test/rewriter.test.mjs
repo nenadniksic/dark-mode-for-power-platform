@@ -108,6 +108,37 @@ test('selectors starting with html or :root are retargeted to :scope when output
   assert.ok(inMedia.includes('{:scope{--capd-bg-brand:'));
 });
 
+/* A browser declaration block for a shorthand that contains var(): the
+   longhands are listed but read as '' (pending substitution), and only the
+   shorthand, read by name, returns the declared text. */
+function pendingDecl(shorthands, longhands) {
+  const keys = longhands;
+  return {
+    length: keys.length,
+    ...Object.fromEntries(keys.map((k, i) => [i, k])),
+    getPropertyValue: (p) => shorthands[p] || '',
+    getPropertyPriority: () => '',
+  };
+}
+
+test('shorthands declared with var() are rewritten even though their longhands read as empty', () => {
+  const bg = { type: 1, selectorText: '.react-flow__controls-button', style: pendingDecl(
+    { background: 'var(--xy-controls-button-background-color,var(--xy-controls-button-background-color-default))', 'border-bottom': '1px solid var(--xy-controls-button-border-color-default)' },
+    ['background-image', 'background-position-x', 'background-color', 'border-bottom-width', 'border-bottom-style', 'border-bottom-color']) };
+  const css = rewriter.rewriteRules([bg], ctx());
+  assert.equal(css, '.react-flow__controls-button{'
+    + 'background:var(--capd-bg-xy-controls-button-background-color, var(--capd-bg-xy-controls-button-background-color-default, var(--xy-controls-button-background-color-default))) !important;'
+    + 'border-bottom:1px solid var(--capd-bd-xy-controls-button-border-color-default, var(--xy-controls-button-border-color-default)) !important;}');
+});
+
+test('shorthands are left alone when their colour longhand has a real value or no var() is involved', () => {
+  const plain = { type: 1, selectorText: '.a', style: pendingDecl({ background: 'rgb(255, 255, 255)', 'background-color': 'rgb(255, 255, 255)' }, ['background-color']) };
+  const css = rewriter.rewriteRules([plain], ctx());
+  assert.match(css, /^\.a\{background-color:rgb\(\d+, \d+, \d+\) !important;\}$/, 'longhand rewritten once, shorthand not repeated');
+  const fluent = { type: 1, selectorText: '.b', style: pendingDecl({ border: '1px solid var(--colorNeutralStroke1)' }, ['border-top-color', 'border-top-width']) };
+  assert.equal(rewriter.rewriteRules([fluent], ctx()), '', 'Fluent tokens stay with the static layer');
+});
+
 test('splitSelectorList respects parentheses, brackets and strings', () => {
   assert.deepEqual(rewriter.splitSelectorList('a, b:not(.c, .d), [data-x="p,q"] e'), ['a', ' b:not(.c, .d)', ' [data-x="p,q"] e']);
 });

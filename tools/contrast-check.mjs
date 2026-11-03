@@ -18,12 +18,17 @@ require('../src/content/60-static-theme.js');
 
 const SURFACES = ['dim', 'dark', 'black'];
 const CONTRASTS = ['standard', 'high'];
+// Brand seeds the theme meets in practice: Power Apps Studio (the shipped
+// ramp), the Power Apps portal, Power Automate, and Fluent UI's default brand.
+const BRANDS = [null, '#742774', '#0066ff', '#0f6cbd'];
 const hex = (c) => color.toHex(c);
 
 export function runChecks() {
   const failures = [];
   const report = [];
-  for (const surface of SURFACES) for (const contrast of CONTRASTS) {
+  for (const brand of BRANDS) for (const surface of SURFACES) for (const contrast of CONTRASTS) {
+    CAPD.brandSeed = brand;
+    const label = brand ? `${surface}/${contrast}/${brand}` : `${surface}/${contrast}`;
     const settings = { surface, contrast, backdrop: 'dark', iconAdapt: true };
     const opts = { surface, contrast };
     const minText = contrast === 'high' ? 7 : 4.5;
@@ -39,8 +44,21 @@ export function runChecks() {
       ['colorNeutralForeground1', 'colorSubtleBackgroundHover', minText],
       ['colorNeutralForegroundOnBrand', 'colorBrandBackground', 4.5],
       ['colorNeutralForegroundOnBrand', 'colorBrandBackgroundHover', 4.5],
+      ['colorNeutralForeground1', 'colorBrandBackgroundInvertedSelected', 4.5], // Power Automate filter pills
+      ['colorNeutralForeground1', 'colorBrandBackgroundInvertedHover', 4.5],
       ['colorBrandForeground1', 'colorNeutralBackground1', 4.5],
       ['colorBrandForegroundLink', 'colorNeutralBackground1', 4.5],
+      ['colorBrandForegroundLink', 'colorNeutralBackground3', 4.5],
+      ['colorBrandForegroundLink', 'colorNeutralCardBackground', 4.5],
+      ['colorBrandForeground1', 'colorNeutralCardBackground', 4.5],
+      ['colorNeutralForeground3', 'colorNeutralCardBackground', minText],
+      ['colorStatusDangerForeground1', 'colorNeutralCardBackground', 4.5],
+      ['colorNeutralForegroundOnBrand', 'colorBrandBackgroundSelected', 4.5],
+      ['colorCompoundBrandForeground1', 'colorNeutralBackground1', 4.5],
+      ['colorCompoundBrandStroke', 'colorNeutralBackground1', 3],
+      ['colorCompoundBrandStroke', 'colorNeutralCardBackground', 3],
+      ['colorBrandStroke1', 'colorNeutralBackground1', 3],
+      ['colorBrandStroke1', 'colorNeutralCardBackground', 3],
       ['colorPaletteRedForeground1', 'colorNeutralBackground1', 4.5],
       ['colorPaletteGreenForeground1', 'colorNeutralBackground1', 4.5],
       ['colorStatusDangerForeground1', 'colorNeutralBackground1', 4.5],
@@ -51,30 +69,36 @@ export function runChecks() {
     ];
     for (const [fg, bg, min] of pairs) {
       const a = t(fg), b = t(bg);
-      if (!a || !b) { failures.push(`${surface}/${contrast}: missing ${fg} or ${bg}`); continue; }
+      if (!a || !b) { failures.push(`${label}: missing ${fg} or ${bg}`); continue; }
       const ratio = color.contrast(a, b);
-      report.push(`${surface.padEnd(5)} ${contrast.padEnd(8)} ${fg.padEnd(34)} on ${bg.padEnd(30)} ${ratio.toFixed(2).padStart(6)}  (min ${min})`);
-      if (ratio < min) failures.push(`${surface}/${contrast}: ${fg} ${hex(a)} on ${bg} ${hex(b)} = ${ratio.toFixed(2)} < ${min}`);
+      report.push(`${label.padEnd(24)} ${fg.padEnd(34)} on ${bg.padEnd(30)} ${ratio.toFixed(2).padStart(6)}  (min ${min})`);
+      if (ratio < min) failures.push(`${label}: ${fg} ${hex(a)} on ${bg} ${hex(b)} = ${ratio.toFixed(2)} < ${min}`);
     }
     // generic mapping: common Studio text colours on the mapped white surface and the backdrop
+    // (independent of the brand, so checked once per surface/contrast)
+    if (brand === null) {
     const surfaceC = color.modify('bg', color.parse('#ffffff'), opts);
     const paper = color.modify('bg', color.parse('#fafafa'), opts);
+    // menus, callouts and dialogs sit on the raised surface (--capd-raised)
+    const raised = color.parse(CAPD.staticTheme.paletteVars(settings).match(/--capd-raised:([^;]+)/)[1]);
     for (const txt of ['#000000', '#242424', '#323130', '#3d3d3d', '#424242', '#605e5c', '#616161', '#707070', '#742774', '#933493', '#0078d4', '#a4262c', '#107c10', '#8a8886']) {
       const fg = color.modify('fg', color.parse(txt), opts);
-      for (const [name, s] of [['surface', surfaceC], ['paper', paper]]) {
+      for (const [name, s] of [['surface', surfaceC], ['paper', paper], ['raised', raised]]) {
         const ratio = color.contrast(fg, s);
         report.push(`${surface.padEnd(5)} ${contrast.padEnd(8)} text ${txt} -> ${hex(fg)} on ${name.padEnd(7)} ${hex(s)} ${ratio.toFixed(2).padStart(6)}  (min ${minText})`);
         if (ratio < minText) failures.push(`${surface}/${contrast}: mapped text ${txt} -> ${hex(fg)} on ${name} ${hex(s)} = ${ratio.toFixed(2)} < ${minText}`);
       }
     }
+    }
     // palette variables used by the hand-written CSS
     const vars = Object.fromEntries(CAPD.staticTheme.paletteVars(settings).match(/--capd-[^:]+:[^;]+/g).map((d) => { const i = d.indexOf(':'); return [d.slice(7, i), d.slice(i + 1)]; }));
-    for (const [fgName, bgName, min] of [['t1', 's1', minText], ['t2', 's1', minText], ['t1', 's2', minText], ['t1', 'raised', minText], ['accent', 's1', 4.5], ['link', 's1', 4.5], ['t1', 'backdrop', minText], ['b3', 's1', 3]]) {
+    for (const [fgName, bgName, min] of [['t1', 's1', minText], ['t2', 's1', minText], ['t1', 's2', minText], ['t1', 'raised', minText], ['t2', 'raised', minText], ['accent', 's1', 4.5], ['accent', 'raised', 4.5], ['link', 's1', 4.5], ['link', 'raised', 4.5], ['t1', 'backdrop', minText], ['b3', 's1', 3]]) {
       const ratio = color.contrast(color.parse(vars[fgName]), color.parse(vars[bgName]));
-      report.push(`${surface.padEnd(5)} ${contrast.padEnd(8)} --capd-${fgName} on --capd-${bgName} ${ratio.toFixed(2).padStart(6)}  (min ${min})`);
-      if (ratio < min) failures.push(`${surface}/${contrast}: --capd-${fgName} ${vars[fgName]} on --capd-${bgName} ${vars[bgName]} = ${ratio.toFixed(2)} < ${min}`);
+      report.push(`${label.padEnd(24)} --capd-${fgName} on --capd-${bgName} ${ratio.toFixed(2).padStart(6)}  (min ${min})`);
+      if (ratio < min) failures.push(`${label}: --capd-${fgName} ${vars[fgName]} on --capd-${bgName} ${vars[bgName]} = ${ratio.toFixed(2)} < ${min}`);
     }
   }
+  CAPD.brandSeed = null;
   return { failures, report };
 }
 

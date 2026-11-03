@@ -36,6 +36,39 @@
   };
 
   const KINDS = ['bg', 'fg', 'bd', 'sh'];
+
+  /**
+   * Colour-bearing shorthands, each with one colour longhand it sets.  When
+   * a shorthand's value contains var(), the browser cannot split it at parse
+   * time: every longhand reports an empty "pending substitution" value and
+   * only the shorthand itself, read by name, returns the declared text.
+   * Iterating a declaration block yields longhands only, so without this
+   * list `background: var(--x)` or `border: 1px solid var(--y)` would never
+   * be rewritten (React Flow's controls in the Power Automate designer were
+   * white on white because of exactly that).
+   */
+  const VAR_SHORTHANDS = [
+    ['background', 'background-color', 'bg'],
+    ['border', 'border-top-color', 'bd'],
+    ['border-color', 'border-top-color', 'bd'],
+    ['border-top', 'border-top-color', 'bd'],
+    ['border-right', 'border-right-color', 'bd'],
+    ['border-bottom', 'border-bottom-color', 'bd'],
+    ['border-left', 'border-left-color', 'bd'],
+    ['border-block', 'border-block-start-color', 'bd'],
+    ['border-block-start', 'border-block-start-color', 'bd'],
+    ['border-block-end', 'border-block-end-color', 'bd'],
+    ['border-block-color', 'border-block-start-color', 'bd'],
+    ['border-inline', 'border-inline-start-color', 'bd'],
+    ['border-inline-start', 'border-inline-start-color', 'bd'],
+    ['border-inline-end', 'border-inline-end-color', 'bd'],
+    ['border-inline-color', 'border-inline-start-color', 'bd'],
+    ['outline', 'outline-color', 'bd'],
+    ['column-rule', 'column-rule-color', 'bd'],
+    ['text-decoration', 'text-decoration-color', 'fg'],
+    ['text-emphasis', 'text-emphasis-color', 'fg'],
+    ['-webkit-text-stroke', '-webkit-text-stroke-color', 'fg'],
+  ];
   const COLORISH_NAME_RE = /colou?r|background|foreground|border|fill|stroke|shadow|accent|brand|theme|highlight|outline|\bbg\b|\bfg\b|tint|shade|overlay|surface|ink|paper/i;
   const VAR_RE = /var\(\s*(--[A-Za-z0-9_-]+)\s*(?:,\s*((?:[^()]|\([^()]*\))*))?\)/;
 
@@ -73,10 +106,12 @@
    */
   function rewriteDeclarations(style, ctx) {
     const out = [];
+    const seen = new Set();
     const n = style.length;
     for (let i = 0; i < n; i++) {
       const prop = style[i];
       if (!prop) continue;
+      seen.add(prop);
       const value = style.getPropertyValue(prop);
       if (!value) continue;
       if (prop.startsWith('--')) {
@@ -93,6 +128,15 @@
       if (!kind) continue;
       const rewritten = color.rewriteValue(kind, value, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
       if (rewritten && rewritten !== value) out.push([prop, rewritten, true]);
+    }
+    // Shorthands declared with var(): their longhands read as empty above.
+    for (const [shorthand, longhand, kind] of VAR_SHORTHANDS) {
+      if (seen.has(shorthand)) continue;              // already handled (only mock CSSOMs list shorthands)
+      if (style.getPropertyValue(longhand)) continue; // longhand has a real value: handled above
+      const value = style.getPropertyValue(shorthand);
+      if (!value || value.indexOf('var(') === -1) continue;
+      const rewritten = color.rewriteValue(kind, value, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
+      if (rewritten && rewritten !== value) out.push([shorthand, rewritten, true]);
     }
     return out;
   }
@@ -213,5 +257,5 @@
     return `@scope (:root) to (${limitSelector}){${css}}`;
   }
 
-  return { PROP_KIND, KINDS, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
+  return { PROP_KIND, KINDS, VAR_SHORTHANDS, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
 });

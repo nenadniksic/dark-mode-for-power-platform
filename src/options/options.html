@@ -64,11 +64,19 @@
       <fieldset>
         <legend>Where</legend>
         <label class="row" for="makerPortal">
-          <span class="row-text"><span class="row-title">Maker portal pages</span><span class="row-hint">Also theme Home, Apps, Tables, Flows and the other make.powerapps.com pages. Studio itself is always themed while dark mode is on.</span></span>
+          <span class="row-text"><span class="row-title">Portal pages and Power Automate</span><span class="row-hint">Also theme the make.powerapps.com pages (Home, Apps, Tables, Flows…) and Power Automate, including the flow designer. Studio itself is always themed while dark mode is on.</span></span>
           <input type="checkbox" id="makerPortal" role="switch" data-key="makerPortal">
           <span class="track" aria-hidden="true"><span class="thumb"></span></span>
         </label>
-        <p class="info">Published apps and the player (apps.powerapps.com) are never touched, and inside Studio the canvas that shows your app is rendered exactly as designed. Windows High Contrast mode takes precedence over this theme.</p>
+        <p class="info">Published apps and the player (apps.powerapps.com) are never touched, and inside Studio the canvas that shows your app is rendered exactly as designed. Each product keeps its own accent colour: purple in Power Apps, blue in Power Automate. Windows High Contrast mode takes precedence over this theme.</p>
+      </fieldset>
+      <fieldset>
+        <legend>Developer</legend>
+        <label class="row" for="devDiagnostics">
+          <span class="row-text"><span class="row-title">Developer diagnostics</span><span class="row-hint">Lets the console of a Power Apps or Power Automate maker page inspect the pages it embeds (Studio, the Flows pages) and try CSS in them, for debugging this extension. Leave off otherwise.</span></span>
+          <input type="checkbox" id="devDiagnostics" role="switch" data-key="devDiagnostics">
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        </label>
       </fieldset>
     </form>
 
@@ -76,7 +84,7 @@
 
     <section class="about" aria-labelledby="about-label">
       <h2 id="about-label">About</h2>
-      <p>Version <span id="version">1.0.0</span>. This extension stores only its settings, collects nothing, and makes no network requests other than fetching Studio's own stylesheets.</p>
+      <p>Version <span id="version">1.1.0</span>. This extension stores only its settings, collects nothing, and makes no network requests other than fetching the pages' own stylesheets.</p>
       <p><button type="button" id="reset" class="secondary">Reset to defaults</button></p>
     </section>
   </main>

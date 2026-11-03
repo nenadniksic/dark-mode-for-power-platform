@@ -69,6 +69,7 @@ if (process.argv.includes('--standalone')) {
     'src/content/40-inline.js',
     'src/content/50-dom-observer.js',
     'src/content/60-static-theme.js',
+    'src/content/70-audit.js',
     'src/content/90-main.js',
   ];
   const shim = `/* standalone shim: no extension APIs; settings come from window.__capdSettings */\n(function(){ if (typeof chrome === 'undefined') { globalThis.chrome = undefined; } })();\n`;

@@ -224,12 +224,19 @@
   /* ------------------------------------------------------------------ */
   const SURFACE_LIGHTNESS = { dim: 0.20, dark: 0.16, black: 0.11 };
 
+  /* Grey ramp step of the raised surface (menus, callouts, dialogs) per
+     surface setting; mirrors the static theme's --capd-raised. */
+  const RAISED_STEP = { dim: 24, dark: 20, black: 14 };
+
   function params(opts) {
     const o = opts || {};
     const surface = SURFACE_LIGHTNESS[o.surface] !== undefined ? SURFACE_LIGHTNESS[o.surface] : SURFACE_LIGHTNESS.dark;
     const high = o.contrast === 'high';
+    let raised = RAISED_STEP[o.surface] !== undefined ? RAISED_STEP[o.surface] : RAISED_STEP.dark;
+    if (high && raised >= 24) raised += 6;
     return {
       bgWhite: surface,            // lightness a pure-white background maps to
+      raised: raised / 100,        // lightness of the raised surface text also has to read on
       bgLow: Math.max(0.06, surface - 0.075), // lightness for L=0.85 backgrounds (the darkest point)
       bgMid: 0.40,                 // lightness for mid-grey backgrounds
       fgMax: high ? 0.98 : 0.90,   // lightness black text maps to
@@ -284,9 +291,11 @@
         if (hsl.l <= 0.5) s = Math.min(s, p.satCap);
         if (hsl.l <= 0.9) {
           // Guarantee legibility: raise lightness until the mapped text meets
-          // the contrast target against the base surface (WCAG AA, AAA in
-          // high-contrast mode).  Saturated hues such as pure blue need this.
-          const surface = fromHsl(0, 0, p.bgWhite);
+          // the contrast target (WCAG AA, AAA in high-contrast mode) on the
+          // raised surface, the lightest one text sits on (menus, callouts,
+          // dialogs); it then also holds on the base surface.  Saturated hues
+          // such as pure blue need this.
+          const surface = fromHsl(0, 0, p.raised);
           const target = p.fgMax > 0.95 ? 7 : 4.5;
           let guard = 0;
           while (contrast(fromHsl(hsl.h, s, l), surface) < target && l < 0.97 && guard++ < 40) {

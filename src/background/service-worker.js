@@ -40,7 +40,7 @@ function allowedCssUrl(url) {
   try {
     const u = new URL(url);
     if (u.protocol !== 'https:') return false;
-    return /(^|\.)(powerapps\.com|powerapps\.us|appsplatform\.us|powerapps\.cn|powerplatform\.com|office\.net|azureedge\.net|msecnd\.net|cdn\.office\.net|static2\.sharepointonline\.com)$/i.test(u.hostname);
+    return /(^|\.)(powerapps\.com|powerapps\.us|appsplatform\.us|powerapps\.cn|powerautomate\.com|powerautomate\.us|powerautomate\.cn|flow\.microsoft\.com|powerplatform\.com|office\.net|azureedge\.net|msecnd\.net|cdn\.office\.net|static2\.sharepointonline\.com)$/i.test(u.hostname);
   } catch (e) { return false; }
 }
 

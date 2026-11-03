@@ -18,6 +18,7 @@
     backdrop: 'dark',      // 'dark' | 'light'  (the dotted area around the app canvas)
     makerPortal: true,     // theme make.powerapps.com pages outside Studio too
     iconAdapt: true,       // lighten dark neutral strokes in Studio's icon sprites
+    devDiagnostics: false, // let the maker page's console inspect framed pages and try CSS (debugging only)
     schemaVersion: 1,
   });
 
@@ -33,7 +34,7 @@
     if (!['dim', 'dark', 'black'].includes(s.surface)) s.surface = DEFAULTS.surface;
     if (!['standard', 'high'].includes(s.contrast)) s.contrast = DEFAULTS.contrast;
     if (!['dark', 'light'].includes(s.backdrop)) s.backdrop = DEFAULTS.backdrop;
-    s.enabled = !!s.enabled; s.makerPortal = !!s.makerPortal; s.iconAdapt = !!s.iconAdapt;
+    s.enabled = !!s.enabled; s.makerPortal = !!s.makerPortal; s.iconAdapt = !!s.iconAdapt; s.devDiagnostics = !!s.devDiagnostics;
     return s;
   }
 

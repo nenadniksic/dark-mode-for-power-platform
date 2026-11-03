@@ -6,17 +6,31 @@
   'use strict';
   const CAPD = (root.CAPD = root.CAPD || {});
 
-  CAPD.VERSION = '1.0.0';
+  CAPD.VERSION = '1.1.0';
   CAPD.ATTR = 'data-capd';                 // on <html>: "dark" while active
   CAPD.INLINE_ATTR = 'data-capd-inline';   // on elements whose inline colours were adapted
   CAPD.REV_ATTR = 'data-capd-rev';         // set by the MAIN-world CSSOM hook on <style>/<link>
   CAPD.STYLE_ATTR = 'data-capd-style';     // on every <style> the extension owns
 
   /**
-   * Subtrees the theme must never recolour: the app being designed.  Used as
-   * the `to (...)` limit of every @scope block and by the inline processor.
+   * Colour previews show a value the maker is choosing, so they must show it
+   * as it is: Studio's palette swatches and property swatches, Fluent v8's
+   * ColorPicker area and sliders, Fluent v9's colour components.  Recolouring
+   * them made the picker lie (Fluent blue shown lightened, the white-to-hue
+   * gradient shown dark, the hue slider dimmed).
    */
-  CAPD.CANVAS_LIMIT_SELECTOR = '#publishedCanvas, .app-canvas, [data-capd-keep]';
+  CAPD.TRUE_COLOR_SELECTOR = [
+    '[class*="pickerFill_"]', '[class*="pickerBackground_"]',          // Studio (Aphrodite) swatches
+    '.ms-ColorPicker-colorRect', '.ms-ColorPicker-slider',              // Fluent v8 ColorPicker
+    '.fui-ColorArea', '.fui-ColorSlider', '.fui-AlphaSlider', '.fui-ColorSwatch', // Fluent v9
+  ].join(', ');
+
+  /**
+   * Subtrees the theme must never recolour: the app being designed, and
+   * colour previews.  Used as the `to (...)` limit of every @scope block and
+   * by the inline processor.
+   */
+  CAPD.CANVAS_LIMIT_SELECTOR = '#publishedCanvas, .app-canvas, [data-capd-keep], ' + CAPD.TRUE_COLOR_SELECTOR;
 
   /** Properties whose values are colours, grouped by the role of the colour. */
   CAPD.PROP_KIND = {
