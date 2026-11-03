@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "Canvas Studio Dark Mode",
+  "short_name": "Studio Dark",
+  "version": "1.0.0",
+  "description": "A carefully crafted dark theme for Power Apps canvas Studio and the maker portal. Your app's canvas stays exactly as you designed it.",
+  "minimum_chrome_version": "120",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Canvas Studio Dark Mode",
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://*.powerapps.com/*",
+    "https://*.powerapps.us/*",
+    "https://*.appsplatform.us/*",
+    "https://*.powerapps.cn/*"
+  ],
+  "commands": {
+    "toggle-dark-mode": {
+      "suggested_key": { "default": "Alt+Shift+D", "mac": "Alt+Shift+D" },
+      "description": "Toggle Canvas Studio Dark Mode"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.powerapps.com/*",
+        "https://*.powerapps.us/*",
+        "https://*.appsplatform.us/*",
+        "https://*.powerapps.cn/*"
+      ],
+      "js": ["src/main-world/cssom-hooks.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true,
+      "match_origin_as_fallback": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://*.powerapps.com/*",
+        "https://*.powerapps.us/*",
+        "https://*.appsplatform.us/*",
+        "https://*.powerapps.cn/*"
+      ],
+      "js": [
+        "src/shared/settings.js",
+        "src/content/00-namespace.js",
+        "src/content/generated/fluent-tokens.js",
+        "src/content/generated/theme-css.js",
+        "src/content/10-color.js",
+        "src/content/20-css-rewriter.js",
+        "src/content/30-style-manager.js",
+        "src/content/40-inline.js",
+        "src/content/50-dom-observer.js",
+        "src/content/60-static-theme.js",
+        "src/content/90-main.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true,
+      "match_origin_as_fallback": true
+    }
+  ]
+}

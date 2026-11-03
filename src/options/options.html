@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canvas Studio Dark Mode — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to settings</a>
+  <header class="top">
+    <img src="../../icons/icon48.png" width="40" height="40" alt="">
+    <div>
+      <h1>Canvas Studio Dark Mode</h1>
+      <p class="sub">Settings sync with your browser profile. Changes apply instantly to open Studio tabs.</p>
+    </div>
+  </header>
+
+  <main id="main" class="main">
+    <form id="form" aria-describedby="saved">
+      <fieldset>
+        <legend>General</legend>
+        <label class="row" for="enabled">
+          <span class="row-text"><span class="row-title">Dark mode</span><span class="row-hint">Master switch. Shortcut: <kbd id="shortcut">Alt+Shift+D</kbd> (change it at chrome://extensions/shortcuts)</span></span>
+          <input type="checkbox" id="enabled" role="switch" data-key="enabled">
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        </label>
+        <div class="row" role="radiogroup" aria-labelledby="mode-label">
+          <span class="row-text"><span class="row-title" id="mode-label">Appearance</span><span class="row-hint">“Follow system” turns dark mode on only while your OS uses a dark colour scheme.</span></span>
+          <span class="segmented" data-key="mode">
+            <label><input type="radio" name="mode" value="dark"><span>Always dark</span></label>
+            <label><input type="radio" name="mode" value="system"><span>Follow system</span></label>
+          </span>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Look</legend>
+        <div class="row" role="radiogroup" aria-labelledby="surface-label">
+          <span class="row-text"><span class="row-title" id="surface-label">Surface</span><span class="row-hint">Base lightness of panels and bars. Dark matches Fluent UI’s dark theme.</span></span>
+          <span class="segmented" data-key="surface">
+            <label><input type="radio" name="surface" value="dim"><span>Dim</span></label>
+            <label><input type="radio" name="surface" value="dark"><span>Dark</span></label>
+            <label><input type="radio" name="surface" value="black"><span>Black</span></label>
+          </span>
+        </div>
+        <label class="row" for="contrast">
+          <span class="row-text"><span class="row-title">High contrast text</span><span class="row-hint">Brighter text and stronger borders, targeting WCAG AAA. Turns on automatically when your OS asks for more contrast.</span></span>
+          <input type="checkbox" id="contrast" role="switch" data-key="contrast" data-on="high" data-off="standard">
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        </label>
+        <label class="row" for="backdrop">
+          <span class="row-text"><span class="row-title">Dark canvas backdrop</span><span class="row-hint">Darkens the dotted work area around your app. Turn off to keep the light backdrop and judge your app against a neutral frame.</span></span>
+          <input type="checkbox" id="backdrop" role="switch" data-key="backdrop" data-on="dark" data-off="light">
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        </label>
+        <label class="row" for="iconAdapt">
+          <span class="row-text"><span class="row-title">Adapt two-tone icons</span><span class="row-hint">Lightens dark grey strokes in Studio’s control icons so they stay visible. Coloured parts are never changed.</span></span>
+          <input type="checkbox" id="iconAdapt" role="switch" data-key="iconAdapt">
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Where</legend>
+        <label class="row" for="makerPortal">
+          <span class="row-text"><span class="row-title">Maker portal pages</span><span class="row-hint">Also theme Home, Apps, Tables, Flows and the other make.powerapps.com pages. Studio itself is always themed while dark mode is on.</span></span>
+          <input type="checkbox" id="makerPortal" role="switch" data-key="makerPortal">
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        </label>
+        <p class="info">Published apps and the player (apps.powerapps.com) are never touched, and inside Studio the canvas that shows your app is rendered exactly as designed. Windows High Contrast mode takes precedence over this theme.</p>
+      </fieldset>
+    </form>
+
+    <p id="saved" class="saved" aria-live="polite"></p>
+
+    <section class="about" aria-labelledby="about-label">
+      <h2 id="about-label">About</h2>
+      <p>Version <span id="version">1.0.0</span>. This extension stores only its settings, collects nothing, and makes no network requests other than fetching Studio's own stylesheets.</p>
+      <p><button type="button" id="reset" class="secondary">Reset to defaults</button></p>
+    </section>
+  </main>
+  <script src="../shared/settings.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

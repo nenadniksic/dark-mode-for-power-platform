@@ -1,0 +1,17 @@
+{
+  "name": "canvas-studio-dark-mode",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dark mode for Power Apps canvas Studio (Chrome extension, Manifest V3).",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "icons": "node tools/build-icons.mjs",
+    "tokens": "node tools/gen-tokens.mjs",
+    "contrast": "node tools/contrast-check.mjs",
+    "package": "node tools/build.mjs && node tools/package.mjs",
+    "standalone": "node tools/build.mjs --standalone"
+  },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}

@@ -1,0 +1,8 @@
+/* Applied synchronously at document_start from the cached state so the page
+   never flashes white before the full theme is computed. */
+html[data-capd="dark"] { background-color: #1f1f1f !important; color-scheme: dark !important; }
+html[data-capd="dark"] > body { background-color: #1f1f1f !important; }
+/* Studio's loading splash is painted by a cross-origin stylesheet that is
+   fetched asynchronously; cover it from the cached state at once. */
+html[data-capd="dark"] #html-splash-screen { background-color: #1f1f1f !important; }
+html[data-capd="dark"] #html-splash-screen .spl-powerapps-text { color: #f5f5f5 !important; }

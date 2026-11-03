@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canvas Studio Dark Mode</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="popup" aria-labelledby="title">
+    <header class="head">
+      <img class="logo" src="../../icons/icon32.png" width="28" height="28" alt="">
+      <div class="head-text">
+        <h1 id="title">Canvas Studio Dark Mode</h1>
+        <p id="status" class="status" aria-live="polite">Checking this tab…</p>
+      </div>
+      <label class="switch" for="enabled">
+        <span class="visually-hidden">Dark mode</span>
+        <input type="checkbox" id="enabled" role="switch" aria-describedby="status">
+        <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+      </label>
+    </header>
+
+    <section class="group" aria-labelledby="appearance-label">
+      <h2 id="appearance-label" class="group-title">Appearance</h2>
+      <div class="segmented" role="radiogroup" aria-labelledby="appearance-label" data-key="mode">
+        <label><input type="radio" name="mode" value="dark"><span>Always dark</span></label>
+        <label><input type="radio" name="mode" value="system"><span>Follow system</span></label>
+      </div>
+    </section>
+
+    <section class="group" aria-labelledby="surface-label">
+      <h2 id="surface-label" class="group-title">Surface</h2>
+      <div class="segmented" role="radiogroup" aria-labelledby="surface-label" data-key="surface">
+        <label><input type="radio" name="surface" value="dim"><span>Dim</span></label>
+        <label><input type="radio" name="surface" value="dark"><span>Dark</span></label>
+        <label><input type="radio" name="surface" value="black"><span>Black</span></label>
+      </div>
+    </section>
+
+    <section class="group rows">
+      <label class="row" for="contrast">
+        <span class="row-text"><span class="row-title">High contrast text</span><span class="row-hint">Brighter text and stronger borders (AAA)</span></span>
+        <input type="checkbox" id="contrast" role="switch" data-key="contrast" data-on="high" data-off="standard">
+        <span class="track small" aria-hidden="true"><span class="thumb"></span></span>
+      </label>
+      <label class="row" for="backdrop">
+        <span class="row-text"><span class="row-title">Dark canvas backdrop</span><span class="row-hint">The dotted work area around your app</span></span>
+        <input type="checkbox" id="backdrop" role="switch" data-key="backdrop" data-on="dark" data-off="light">
+        <span class="track small" aria-hidden="true"><span class="thumb"></span></span>
+      </label>
+      <label class="row" for="makerPortal">
+        <span class="row-text"><span class="row-title">Maker portal pages</span><span class="row-hint">Home, Apps, Tables and other make.powerapps.com pages</span></span>
+        <input type="checkbox" id="makerPortal" role="switch" data-key="makerPortal">
+        <span class="track small" aria-hidden="true"><span class="thumb"></span></span>
+      </label>
+    </section>
+
+    <p class="note">Your app's canvas is never recoloured — it always renders exactly as designed.</p>
+
+    <footer class="foot">
+      <button type="button" id="options" class="link-button">All settings</button>
+      <span class="shortcut" id="shortcut" title="Keyboard shortcut">Alt+Shift+D</span>
+    </footer>
+  </main>
+  <script src="../shared/settings.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

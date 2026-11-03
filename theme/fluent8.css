@@ -1,0 +1,66 @@
+/* ==========================================================================
+   Fluent UI v8 (Fabric) components — Studio still uses them for the command
+   bar, callouts, panels, context menus and dialogs.  The generated overrides
+   recolour their merge-styles classes; these rules fix the few places where
+   a generic mapping is not good enough.
+   ========================================================================== */
+
+/* Elevated surfaces should sit visibly above the page */
+html[data-capd="dark"] .ms-Callout-main,
+html[data-capd="dark"] .ms-ContextualMenu,
+html[data-capd="dark"] .ms-Dropdown-callout .ms-Callout-main,
+html[data-capd="dark"] .ms-Panel-main,
+html[data-capd="dark"] .ms-Dialog-main,
+html[data-capd="dark"] .ms-Modal .ms-Dialog-main,
+html[data-capd="dark"] .ms-TeachingBubble-content { background-color: var(--capd-raised) !important; }
+html[data-capd="dark"] .ms-Callout-beak { background-color: var(--capd-raised) !important; }
+html[data-capd="dark"] .ms-Callout-main,
+html[data-capd="dark"] .ms-ContextualMenu-container { box-shadow: var(--capd-shadow) !important; }
+
+/* Overlays */
+html[data-capd="dark"] .ms-Overlay { background-color: rgba(0, 0, 0, 0.55) !important; }
+html[data-capd="dark"] .ms-Overlay--dark { background-color: rgba(0, 0, 0, 0.7) !important; }
+
+/* Primary buttons keep the brand surface and white text */
+html[data-capd="dark"] .ms-Button--primary,
+html[data-capd="dark"] .ms-Button--primary .ms-Button-label { color: #ffffff !important; }
+html[data-capd="dark"] .ms-Button--primary.is-disabled,
+html[data-capd="dark"] .ms-Button--primary.is-disabled .ms-Button-label { color: var(--capd-t3) !important; }
+
+/* Inputs */
+html[data-capd="dark"] .ms-TextField-fieldGroup,
+html[data-capd="dark"] .ms-Dropdown-title,
+html[data-capd="dark"] .ms-ComboBox,
+html[data-capd="dark"] .ms-SearchBox { background-color: var(--capd-s2) !important; border-color: var(--capd-b2) !important; }
+html[data-capd="dark"] .ms-TextField-fieldGroup:hover,
+html[data-capd="dark"] .ms-Dropdown-title:hover,
+html[data-capd="dark"] .ms-ComboBox:hover,
+html[data-capd="dark"] .ms-SearchBox:hover { border-color: var(--capd-b3) !important; }
+html[data-capd="dark"] .ms-TextField-fieldGroup input,
+html[data-capd="dark"] .ms-TextField-fieldGroup textarea,
+html[data-capd="dark"] .ms-ComboBox-Input,
+html[data-capd="dark"] .ms-SearchBox-field { color: var(--capd-t1) !important; background: transparent !important; }
+html[data-capd="dark"] .ms-TextField-fieldGroup input::placeholder,
+html[data-capd="dark"] .ms-SearchBox-field::placeholder { color: var(--capd-t3) !important; }
+
+/* Lists and menus */
+html[data-capd="dark"] .ms-ContextualMenu-link:hover,
+html[data-capd="dark"] .ms-ContextualMenu-link.is-expanded,
+html[data-capd="dark"] .ms-Dropdown-item:hover,
+html[data-capd="dark"] .ms-ComboBox-option:hover,
+html[data-capd="dark"] .ms-DetailsRow:hover { background-color: rgba(255, 255, 255, 0.07) !important; }
+html[data-capd="dark"] .ms-Dropdown-item.is-selected,
+html[data-capd="dark"] .ms-DetailsRow.is-selected { background-color: var(--capd-accent-soft) !important; }
+html[data-capd="dark"] .ms-ContextualMenu-divider,
+html[data-capd="dark"] .ms-Divider { background-color: var(--capd-b1) !important; }
+
+/* Pivot (tabs) */
+html[data-capd="dark"] .ms-Pivot-link.is-selected::before { background-color: var(--capd-accent) !important; }
+html[data-capd="dark"] .ms-Pivot-link:hover { background-color: rgba(255, 255, 255, 0.06) !important; }
+
+/* Message bars keep their semantic tint but on dark */
+html[data-capd="dark"] .ms-MessageBar { background-color: var(--capd-s3) !important; }
+html[data-capd="dark"] .ms-MessageBar--error { background-color: rgba(241, 112, 123, 0.16) !important; }
+html[data-capd="dark"] .ms-MessageBar--warning,
+html[data-capd="dark"] .ms-MessageBar--severeWarning { background-color: rgba(248, 196, 80, 0.16) !important; }
+html[data-capd="dark"] .ms-MessageBar--success { background-color: rgba(108, 203, 95, 0.16) !important; }

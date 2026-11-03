@@ -1,0 +1,46 @@
+/* ==========================================================================
+   Canvas Studio Dark Mode — hand-tuned rules for Power Apps Studio
+   (authoring frame).  These load after the generated overrides, so they win
+   ties on specificity; use !important to beat the page's own !important.
+   Palette variables (--capd-*) are computed from the user's settings.
+   ========================================================================== */
+
+html[data-capd="dark"] { color-scheme: dark !important; }
+html[data-capd="dark"] body#rootBody { background-color: var(--capd-s0) !important; }
+
+/* ---- canvas backdrop: the dotted work area around the app -------------- */
+html[data-capd="dark"] .authoring-area,
+html[data-capd="dark"] #canvasGrid,
+html[data-capd="dark"] #blankPage,
+html[data-capd="dark"] #content-host { background-color: var(--capd-backdrop) !important; }
+html[data-capd="dark"] #animatedCanvasScrollableContainer {
+  background-color: var(--capd-backdrop) !important;
+  background-image: radial-gradient(var(--capd-dot) 1.33px, transparent 0) !important;
+}
+
+/* ---- top bars ----------------------------------------------------------- */
+html[data-capd="dark"] #commandBarContainer,
+html[data-capd="dark"] #formulaBarContainer,
+html[data-capd="dark"] #rootFormulaEditor { background-color: var(--capd-s1) !important; }
+
+/* ---- generic focus visibility: never let a focus ring disappear --------- */
+html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-Button:focus::after,
+html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-Link:focus,
+html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-Pivot-link:focus::after,
+html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-Checkbox:focus::after,
+html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-Toggle:focus::after,
+html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-Dropdown:focus::after,
+html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-TextField:focus::after { outline-color: var(--capd-focus) !important; }
+
+/* ---- images: keep photos, avatars and logos as they are ----------------- */
+html[data-capd="dark"] img { filter: none !important; }
+
+/* ---- text selection ----------------------------------------------------- */
+html[data-capd="dark"] ::selection { background-color: var(--capd-selection) !important; color: #ffffff !important; }
+
+/* ---- scrollbars (WebKit) ------------------------------------------------ */
+html[data-capd="dark"] ::-webkit-scrollbar { width: 12px; height: 12px; }
+html[data-capd="dark"] ::-webkit-scrollbar-track { background: transparent !important; }
+html[data-capd="dark"] ::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.18) !important; border: 3px solid transparent !important; background-clip: content-box !important; border-radius: 8px !important; }
+html[data-capd="dark"] ::-webkit-scrollbar-thumb:hover { background-color: rgba(255, 255, 255, 0.30) !important; }
+html[data-capd="dark"] ::-webkit-scrollbar-corner { background: transparent !important; }

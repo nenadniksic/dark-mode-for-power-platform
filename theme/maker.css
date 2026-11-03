@@ -1,0 +1,32 @@
+/* ==========================================================================
+   make.powerapps.com shell (Office header, left navigation, home page).
+   The header keeps its brand purple; everything else follows the palette.
+   ========================================================================== */
+html[data-capd="dark"] body { background-color: var(--capd-s0) !important; }
+
+/* Office suite header: a uniform near-black bar with white text and the
+   brand purple kept for hover / pressed states, like Microsoft's own dark
+   header.  The shell paints its buttons black and its regions purple, which
+   reads as patchwork on a dark page. */
+html[data-capd="dark"] #o365header,
+html[data-capd="dark"] #O365_NavHeader,
+html[data-capd="dark"] .o365cs-base .o365sx-button,
+html[data-capd="dark"] .o365cs-base .o365sx-waffle,
+html[data-capd="dark"] #O365_HeaderRightRegion,
+html[data-capd="dark"] #O365_HeaderLeftRegion { background-color: #141414 !important; }
+html[data-capd="dark"] .o365cs-base .o365sx-button:hover,
+html[data-capd="dark"] .o365cs-base .o365sx-button:focus-visible,
+html[data-capd="dark"] .o365cs-base .o365sx-waffle:hover { background-color: var(--capd-accent-bg) !important; }
+html[data-capd="dark"] .o365cs-base .o365sx-button:active { background-color: #641264 !important; }
+html[data-capd="dark"] #O365_AppName,
+html[data-capd="dark"] #O365_AppName * ,
+html[data-capd="dark"] #ppuxOfficeHeaderBranding_container * { color: #ffffff !important; }
+html[data-capd="dark"] #ppuxOfficeHeaderSearchBox_container input { background-color: rgba(255, 255, 255, 0.10) !important; color: #ffffff !important; }
+html[data-capd="dark"] #ppuxOfficeHeaderSearchBox_container input::placeholder { color: rgba(255, 255, 255, 0.72) !important; }
+html[data-capd="dark"] .iframe-190,
+html[data-capd="dark"] iframe[name="EmbeddedStudio"] { background-color: var(--capd-s0) !important; }
+
+/* Home page hero: a decorative light-pink artwork fills the main area and
+   would sit behind light text; drop it and let the surface show. */
+html[data-capd="dark"] main[class*="main-"],
+html[data-capd="dark"] [class*="mainContainerStyle"] main { background-image: none !important; background-color: var(--capd-s0) !important; }

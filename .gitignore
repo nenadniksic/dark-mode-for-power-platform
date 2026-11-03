@@ -1,0 +1,5 @@
+node_modules/
+dist/*.zip
+dist/standalone/
+.playwright-mcp/
+.DS_Store

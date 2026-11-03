@@ -1,0 +1,217 @@
+/*
+ * Canvas Studio Dark Mode — CSSOM rewriter.
+ *
+ * Walks a stylesheet's rules and produces an override stylesheet containing
+ * only the colour-bearing declarations, each mapped to its dark counterpart.
+ * Custom properties that hold colours are re-emitted as typed variants
+ * (--capd-bg-*, --capd-fg-*, --capd-bd-*, --capd-sh-*) and every var()
+ * reference inside a colour property is retargeted to the variant that fits
+ * the property's role.  Fluent UI v9 design tokens are excluded here because
+ * the static token layer redefines them with Fluent's own dark values.
+ *
+ * UMD-style so it is testable under node with a mock CSSOM.
+ */
+(function (root, factory) {
+  'use strict';
+  const ns = (root.CAPD = root.CAPD || {});
+  const color = ns.color || (typeof require === 'function' ? require('./10-color.js') : null);
+  const api = factory(color, ns.PROP_KIND);
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  ns.rewriter = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (color, PROP_KIND_IN) {
+  'use strict';
+
+  const PROP_KIND = PROP_KIND_IN || {
+    'color': 'fg', 'caret-color': 'fg', 'text-decoration-color': 'fg', 'text-emphasis-color': 'fg',
+    '-webkit-text-fill-color': 'fg', '-webkit-text-stroke-color': 'fg', 'fill': 'fg', 'stroke': 'fg',
+    'lighting-color': 'fg', 'flood-color': 'fg', 'stop-color': 'fg', 'accent-color': 'fg',
+    'background-color': 'bg', 'background': 'bg', 'background-image': 'bg',
+    'border-color': 'bd', 'border-top-color': 'bd', 'border-right-color': 'bd', 'border-bottom-color': 'bd', 'border-left-color': 'bd',
+    'border-block-start-color': 'bd', 'border-block-end-color': 'bd', 'border-inline-start-color': 'bd', 'border-inline-end-color': 'bd',
+    'border': 'bd', 'border-top': 'bd', 'border-right': 'bd', 'border-bottom': 'bd', 'border-left': 'bd',
+    'outline-color': 'bd', 'outline': 'bd', 'column-rule-color': 'bd', 'column-rule': 'bd',
+    'border-image': 'bd', 'border-image-source': 'bd',
+    'box-shadow': 'sh', 'text-shadow': 'sh', 'filter': 'sh',
+    'scrollbar-color': 'bg',
+  };
+
+  const KINDS = ['bg', 'fg', 'bd', 'sh'];
+  const COLORISH_NAME_RE = /colou?r|background|foreground|border|fill|stroke|shadow|accent|brand|theme|highlight|outline|\bbg\b|\bfg\b|tint|shade|overlay|surface|ink|paper/i;
+  const VAR_RE = /var\(\s*(--[A-Za-z0-9_-]+)\s*(?:,\s*((?:[^()]|\([^()]*\))*))?\)/;
+
+  function typedName(kind, varName) {
+    return `--capd-${kind}-${varName.slice(2)}`;
+  }
+
+  /**
+   * Rewrite a single var() expression for the given role.  Nested fallbacks
+   * are handled recursively; excluded (Fluent token) names are left alone.
+   */
+  function rewriteVar(expr, kind, ctx) {
+    const m = VAR_RE.exec(expr);
+    if (!m) return expr;
+    const name = m[1];
+    if (ctx.isExcludedVar && ctx.isExcludedVar(name, kind)) return expr;
+    let fallback = m[2];
+    if (fallback !== undefined) {
+      const fb = color.rewriteValue(kind, fallback, ctx.opts, (v, k) => rewriteVar(v, k, ctx));
+      if (fb) fallback = fb;
+      return `var(${typedName(kind, name)}, ${fallback})`;
+    }
+    return `var(${typedName(kind, name)}, var(${name}))`;
+  }
+
+  function valueLooksColorish(name, value) {
+    if (color.containsColor(value)) return true;
+    if (value.includes('var(') && COLORISH_NAME_RE.test(name)) return true;
+    return false;
+  }
+
+  /**
+   * Produce the override declarations for one CSSStyleDeclaration-like
+   * object.  Returns an array of [prop, value, important] triples.
+   */
+  function rewriteDeclarations(style, ctx) {
+    const out = [];
+    const n = style.length;
+    for (let i = 0; i < n; i++) {
+      const prop = style[i];
+      if (!prop) continue;
+      const value = style.getPropertyValue(prop);
+      if (!value) continue;
+      if (prop.startsWith('--')) {
+        if (ctx.isExcludedVar && ctx.isExcludedVar(prop)) continue;
+        const v = value.trim();
+        if (!valueLooksColorish(prop, v)) continue;
+        for (const kind of KINDS) {
+          const rewritten = color.rewriteValue(kind, v, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx)) || v;
+          out.push([typedName(kind, prop), rewritten, false]);
+        }
+        continue;
+      }
+      const kind = PROP_KIND[prop];
+      if (!kind) continue;
+      const rewritten = color.rewriteValue(kind, value, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
+      if (rewritten && rewritten !== value) out.push([prop, rewritten, true]);
+    }
+    return out;
+  }
+
+  /**
+   * Split a selector list on top-level commas (ignoring commas inside
+   * parentheses, brackets and strings).
+   */
+  function splitSelectorList(text) {
+    const out = [];
+    let depth = 0, quote = null, start = 0;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (quote) { if (ch === '\\') i++; else if (ch === quote) quote = null; continue; }
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (ch === '(' || ch === '[') depth++;
+      else if (ch === ')' || ch === ']') depth--;
+      else if (ch === ',' && depth === 0) { out.push(text.slice(start, i)); start = i + 1; }
+    }
+    out.push(text.slice(start));
+    return out;
+  }
+
+  const ROOT_COMPOUND_RE = /^(\s*)(html|:root)(?=$|[\s>+~.:#[])/i;
+
+  /**
+   * Inside `@scope (:root) to (...)` every selector is matched relative to
+   * the scoping root, so a selector that starts with `html` or `:root` can
+   * never match (the root is not its own descendant).  Rewrite that leading
+   * compound to `:scope`, which does match the root.
+   */
+  function scopeSelector(selectorText) {
+    if (!/html|:root/i.test(selectorText)) return selectorText;
+    return splitSelectorList(selectorText).map((sel) => sel.replace(ROOT_COMPOUND_RE, '$1:scope')).join(',');
+  }
+
+  function serializeDecls(decls) {
+    return decls.map(([p, v, imp]) => `${p}:${v}${imp ? ' !important' : ''};`).join('');
+  }
+
+  /**
+   * Recursively rewrite a list of CSS rules.  Returns the override CSS text
+   * (possibly empty).  `ctx.onForeign(url, media)` is invoked for @import
+   * targets whose rules cannot be read (cross-origin).
+   */
+  function rewriteRules(rules, ctx, depth, hops) {
+    depth = depth || 0;
+    hops = (hops || 0) + 1;
+    if (depth > 12 || hops > 40) return '';
+    const parts = [];
+    const len = rules.length;
+    for (let i = 0; i < len; i++) {
+      const rule = rules[i];
+      const type = rule.type; // CSSRule.STYLE_RULE === 1 etc.
+      try {
+        if (type === 1 /* STYLE_RULE */) {
+          const decls = rewriteDeclarations(rule.style, ctx);
+          let inner = '';
+          if (rule.cssRules && rule.cssRules.length) inner = rewriteRules(rule.cssRules, ctx, depth + 1);
+          // (nested rules carry relative selectors and keep depth + 1)
+          if (decls.length || inner) {
+            const selector = ctx.scoped && depth === 0 ? scopeSelector(rule.selectorText) : rule.selectorText;
+            parts.push(`${selector}{${serializeDecls(decls)}${inner}}`);
+          }
+        } else if (type === 4 /* MEDIA_RULE */) {
+          const inner = rewriteRules(rule.cssRules, ctx, depth);
+          if (inner) parts.push(`@media ${rule.conditionText || rule.media.mediaText}{${inner}}`);
+        } else if (type === 12 /* SUPPORTS_RULE */) {
+          const inner = rewriteRules(rule.cssRules, ctx, depth);
+          if (inner) parts.push(`@supports ${rule.conditionText}{${inner}}`);
+        } else if (type === 3 /* IMPORT_RULE */) {
+          const sheet = rule.styleSheet;
+          let inner = null;
+          if (sheet) {
+            try { inner = rewriteRules(sheet.cssRules, ctx, depth); }
+            catch (e) { if (ctx.onForeign) ctx.onForeign(rule.href, rule.media && rule.media.mediaText); }
+          }
+          if (inner) {
+            const mt = rule.media && rule.media.mediaText;
+            parts.push(mt ? `@media ${mt}{${inner}}` : inner);
+          }
+        } else if (type === 0 && rule.cssRules && (rule.constructor && /Container|Layer|Scope|StartingStyle/.test(rule.constructor.name))) {
+          // @container keeps its condition; @layer / @scope / @starting-style are flattened.
+          const inner = rewriteRules(rule.cssRules, ctx, depth);
+          if (inner) {
+            const name = rule.constructor.name;
+            if (name === 'CSSContainerRule') parts.push(`@container ${rule.conditionText}{${inner}}`);
+            else parts.push(inner);
+          }
+        } else if (type === 0 && rule.style && !rule.selectorText) {
+          // CSSNestedDeclarations: bare declarations inside a nested parent.
+          const decls = rewriteDeclarations(rule.style, ctx);
+          if (decls.length) parts.push(serializeDecls(decls));
+        }
+        // keyframes (7), font-face (5), page (6), namespace (10), counter-style (11),
+        // font-feature-values (14), property (0) etc. are intentionally ignored.
+      } catch (e) {
+        if (ctx.onError) ctx.onError(e, rule);
+      }
+    }
+    return parts.join('');
+  }
+
+  /**
+   * Rewrite a whole stylesheet.  Throws if the sheet's rules are not
+   * readable (cross-origin) — callers fetch the text and retry with a
+   * constructed CSSStyleSheet.
+   */
+  function rewriteSheet(sheet, ctx) {
+    const rules = sheet.cssRules; // may throw SecurityError
+    return rewriteRules(rules, ctx, 0);
+  }
+
+  /** Wrap override CSS so it never reaches the designer canvas. */
+  function scoped(css, limitSelector) {
+    if (!css) return '';
+    if (!limitSelector) return css;
+    return `@scope (:root) to (${limitSelector}){${css}}`;
+  }
+
+  return { PROP_KIND, KINDS, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
+});
