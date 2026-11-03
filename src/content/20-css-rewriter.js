@@ -70,6 +70,8 @@
     ['-webkit-text-stroke', '-webkit-text-stroke-color', 'fg'],
   ];
   const COLORISH_NAME_RE = /colou?r|background|foreground|border|fill|stroke|shadow|accent|brand|theme|highlight|outline|\bbg\b|\bfg\b|tint|shade|overlay|surface|ink|paper/i;
+  const BORDER_SIDES = ['border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'];
+  const TRANSPARENT_RE = /^(transparent|rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\))$/i;
   const VAR_RE = /var\(\s*(--[A-Za-z0-9_-]+)\s*(?:,\s*((?:[^()]|\([^()]*\))*))?\)/;
 
   function typedName(kind, varName) {
@@ -151,6 +153,15 @@
       const rewritten = color.rewriteValue(kind, value, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
       if (rewritten && rewritten !== value) out.push([shorthand, rewritten, true, pageImportant]);
       else if (pageImportant) out.push([shorthand, value, true, true]);
+    }
+    // The Neon style draws an edge and a halo on bordered controls.  A rule
+    // that makes all four borders transparent says this element has none
+    // (Fluent buttons restyled as menu items and toggles, such as the
+    // solution explorer's sidebar), so it marks the element and the glow
+    // leaves it alone.  The marks are registered as non-inheriting, so a
+    // borderless container does not switch off the controls inside it.
+    if (ctx.opts && ctx.opts.look === 'neon' && BORDER_SIDES.every((p) => TRANSPARENT_RE.test(style.getPropertyValue(p).trim()))) {
+      out.push(['--capd-edge', 'transparent', false], ['--capd-halo', 'none', false]);
     }
     return out;
   }

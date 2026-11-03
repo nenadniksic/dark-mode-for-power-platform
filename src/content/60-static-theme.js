@@ -272,9 +272,14 @@
 
   const LIMIT = () => CAPD.CANVAS_LIMIT_SELECTOR;
 
+  /* The rewriter marks borderless elements with these for the Neon glow;
+     they must not inherit, or a borderless container would switch off the
+     glow of every control inside it. */
+  const EDGE_MARKS = "@property --capd-edge{syntax:'*';inherits:false}@property --capd-halo{syntax:'*';inherits:false}";
+
   function buildStatic(settings, scope) {
     const css = (CAPD.themeCSS && CAPD.themeCSS.fallback) || '';
-    return paletteVars(settings) + rewriter.scoped(tokenCSS(settings), scope ? LIMIT() : null) + css;
+    return EDGE_MARKS + paletteVars(settings) + rewriter.scoped(tokenCSS(settings), scope ? LIMIT() : null) + css;
   }
 
   function buildTuned(settings, role, scope) {

@@ -41,7 +41,7 @@ test('static and tuned layers are scoped away from the canvas, tuned rules use :
   assert.equal(inline, CAPD.InlineProcessor.css);
   assert.ok(!tuned.includes('html[data-capd'), 'a leading html selector never matches inside @scope (:root)');
   assert.ok(tuned.includes(':scope[data-capd="dark"]'));
-  assert.ok(st.startsWith(':root{--capd-s0:'), 'palette variables are declared outside the scope');
+  assert.ok(st.indexOf(':root{--capd-s0:') > -1 && st.indexOf(':root{--capd-s0:') < st.indexOf('@scope'), 'palette variables are declared outside the scope');
   // maker rules only for maker roles
   assert.ok(!CAPD.staticTheme.buildTuned(settings, 'studio', true).includes('o365sx-waffle'));
   assert.ok(CAPD.staticTheme.buildTuned(settings, 'studio-host', true).includes('o365sx-waffle'));
@@ -162,4 +162,11 @@ test('Neon glow rules are all gated on the neon look and scoped away from the ca
     for (const s of rule.slice(0, rule.indexOf('{')).split(/,(?![^(]*\))/)) assert.ok(s.trim().startsWith(':scope[data-capd="dark"][data-capd-look="neon"]'), s.trim().slice(0, 80));
   }
   assert.ok(tuned.includes(neon) && tuned.startsWith('@scope'), 'inside the canvas scope');
+});
+
+test('Neon: the borderless marks are registered as non-inheriting, and only default buttons read them', () => {
+  const css = CAPD.staticTheme.buildStatic(settings, true);
+  assert.ok(css.startsWith("@property --capd-edge{syntax:'*';inherits:false}@property --capd-halo{syntax:'*';inherits:false}"));
+  const neon = CAPD.themeCSS.neon;
+  for (const rule of neon.split('}').filter((r) => r.includes('var(--capd-halo') || r.includes('var(--capd-edge'))) assert.ok(rule.slice(0, rule.indexOf('{')).split(/,(?![^(]*\))/).every((s) => s.includes('.ms-Button--default')), rule.slice(0, 120));
 });

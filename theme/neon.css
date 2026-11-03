@@ -25,8 +25,8 @@ html[data-capd="dark"][data-capd-look="neon"] [role="tablist"][aria-orientation=
 /* Controls glow: a neon-pink edge with a soft halo on every bordered input,
    dropdown, switch, checkbox and option button, brighter on hover, cyan
    while focused.  Listed explicitly (Studio's Aphrodite controls, Fluent v8,
-   Fluent v9) so borderless elements never get a stray halo; default buttons
-   that act as tabs are not bordered controls, so they are left out. */
+   Fluent v9) so borderless elements never get a stray halo.  Fluent v8
+   default buttons follow below: many of them are borderless by design. */
 html[data-capd="dark"][data-capd-look="neon"] input[class*="inputStyles_"],
 html[data-capd="dark"][data-capd-look="neon"] button[class*="faceplate_"],
 html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][class*="button_"],
@@ -37,7 +37,6 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]),
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown,
@@ -61,7 +60,6 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:hover,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:hover,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:hover,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:hover,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):hover,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input:hover,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:hover,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:hover,
@@ -84,7 +82,6 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:focus,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:focus,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:focus,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:focus,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):focus,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input:focus,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:focus,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:focus,
@@ -105,7 +102,6 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle-background:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox-checkbox:focus-within,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:focus-within,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:focus-within,
@@ -118,6 +114,22 @@ html[data-capd="dark"][data-capd-look="neon"] .fui-Checkbox__indicator:focus-wit
 html[data-capd="dark"][data-capd-look="neon"] .fui-Radio__indicator:focus-within {
   border-color: var(--capd-neon-cyan) !important;
   box-shadow: 0 0 10px rgba(0, 229, 255, 0.65), inset 0 0 5px rgba(0, 229, 255, 0.18) !important;
+}
+/* Fluent v8 default buttons glow the same way, unless the page made the
+   button borderless: menu items, sidebars and pane toggles are default
+   buttons with a transparent border, and the rewriter marks those with
+   --capd-edge / --capd-halo.  Buttons acting as tabs never glow. */
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]) {
+  border-color: var(--capd-edge, rgba(255, 42, 138, 0.75)) !important;
+  box-shadow: var(--capd-halo, 0 0 7px rgba(255, 42, 138, 0.5), inset 0 0 5px rgba(255, 42, 138, 0.14)) !important;
+}
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):hover {
+  box-shadow: var(--capd-halo, 0 0 12px rgba(255, 42, 138, 0.75), inset 0 0 6px rgba(255, 42, 138, 0.2)) !important;
+}
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):focus,
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default:not([role="tab"]):focus-within {
+  border-color: var(--capd-edge, var(--capd-neon-cyan)) !important;
+  box-shadow: var(--capd-halo, 0 0 10px rgba(0, 229, 255, 0.65), inset 0 0 5px rgba(0, 229, 255, 0.18)) !important;
 }
 /* The chosen option of a button group (Justify / Align) lights up */
 html[data-capd="dark"][data-capd-look="neon"] button[role="radio"][aria-checked="true"] {
@@ -139,7 +151,6 @@ html[data-capd="dark"][data-capd-look="neon"] .ms-SearchBox.is-disabled,
 html[data-capd="dark"][data-capd-look="neon"] .ms-SpinButton-spinButtonWrapper:has(input:disabled),
 html[data-capd="dark"][data-capd-look="neon"] .ms-Toggle.is-disabled .ms-Toggle-background,
 html[data-capd="dark"][data-capd-look="neon"] .ms-Checkbox.is-disabled .ms-Checkbox-checkbox,
-html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default.is-disabled,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Input:has(input:disabled),
 html[data-capd="dark"][data-capd-look="neon"] .fui-Textarea:has(textarea:disabled),
 html[data-capd="dark"][data-capd-look="neon"] .fui-Dropdown:has(button:disabled),
@@ -151,6 +162,10 @@ html[data-capd="dark"][data-capd-look="neon"] .fui-Switch__input:disabled ~ .fui
 html[data-capd="dark"][data-capd-look="neon"] .fui-Checkbox__input:disabled ~ .fui-Checkbox__indicator,
 html[data-capd="dark"][data-capd-look="neon"] .fui-Radio__input:disabled ~ .fui-Radio__indicator {
   border-color: var(--capd-disabled) !important;
+  box-shadow: none !important;
+}
+html[data-capd="dark"][data-capd-look="neon"] .ms-Button--default.is-disabled:not([role="tab"]) {
+  border-color: var(--capd-edge, var(--capd-disabled)) !important;
   box-shadow: none !important;
 }
 /* A disabled switch that is on is filled, so its edge disappears into it */

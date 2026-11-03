@@ -166,3 +166,13 @@ test('a text token used as a background is retargeted to its background variant'
 test('splitSelectorList respects parentheses, brackets and strings', () => {
   assert.deepEqual(rewriter.splitSelectorList('a, b:not(.c, .d), [data-x="p,q"] e'), ['a', ' b:not(.c, .d)', ' [data-x="p,q"] e']);
 });
+
+test('Neon: a rule that makes all four borders transparent marks the element as borderless', () => {
+  const sides = { 'border-top-color': 'transparent', 'border-right-color': 'transparent', 'border-bottom-color': 'rgba(0, 0, 0, 0)', 'border-left-color': 'transparent' };
+  const neon = rewriter.rewriteRules([styleRule('.root-885', sides)], ctx({ opts: { look: 'neon' } }));
+  assert.equal(neon, '.root-885{--capd-edge:transparent;--capd-halo:none;}');
+  // the classic style has no glow to switch off
+  assert.equal(rewriter.rewriteRules([styleRule('.root-885', sides)], ctx({ opts: { look: 'classic' } })), '');
+  // one visible side means the element has a border
+  assert.equal(rewriter.rewriteRules([styleRule('.root-1', { ...sides, 'border-bottom-color': 'rgb(138, 136, 134)' })], ctx({ opts: { look: 'neon' } })).includes('--capd-edge'), false);
+});

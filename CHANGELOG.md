@@ -5,6 +5,7 @@
 ### Fixed
 - Studio's Settings dialog in the Neon style: General / Display / Updates / Support each sat in a pink box. They are Fluent buttons acting as tabs, and the glow meant for bordered controls caught them. Tabs no longer glow; the selected page gets a pink edge instead.
 - Disabled switches showed no state in either style (Settings > Updates when the app is read-only or shared): the thumb became as dark as the pill. A disabled switch is now an outline when off and filled when on.
+- In the Neon style, buttons the page draws without a border got a pink box anyway: the solution explorer's sidebar (Overview / Objects / History / Pipelines / Source control) and its ≡ toggle, among others. They are Fluent default buttons with a transparent border, and the glow for bordered buttons forced an edge onto them. The theme now notices a transparent border and leaves those buttons alone; bordered ones still glow.
 - In the Neon style, disabled controls glowed like enabled ones. They now keep a plain edge and no halo.
 - Disabled text was close to unreadable (about 2.3:1 on a dialog, a murky purple in the Neon style), and Studio explains disabled settings in it. It now reads at 3:1, still clearly dimmer than enabled text.
 
