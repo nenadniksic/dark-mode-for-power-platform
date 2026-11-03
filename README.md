@@ -9,6 +9,22 @@ A carefully crafted dark theme for **Power Apps canvas Studio**, the maker porta
 - Accessible by design: every text/surface pairing the theme produces is checked against WCAG 2.1 AA (AAA in the high-contrast setting), focus rings are preserved, Windows High Contrast mode is respected, and the extension never changes the DOM structure or ARIA of the page.
 - Zero telemetry, no accounts, no network requests other than fetching Studio's own stylesheets.
 
+## Why not a general dark-mode extension?
+
+For Power Platform work, a dedicated theme does things a general one cannot, and those things matter in a design tool. The comparison below follows from how general dark modes work (they recolour every page by the same rules); it is not a benchmark against any particular product.
+
+- **Your app stays true.** General tools recolour everything, including the canvas that shows the app you are designing, so a white app looks dark and you cannot judge the real design. This extension never touches the canvas.
+- **Colour pickers show real colours.** A general tool recolours swatches and gradients like any other element, so the colour you pick is not the colour you see. Here, swatches and the colour picker are left exactly as they are.
+- **Built for Studio's structure.** It recolours Studio's own colour settings with Microsoft's own dark mapping, and handles Studio's special cases: sprite icons, the forced styles behind property labels, and the command-bar colours.
+- **Tested readability.** Every colour pairing the theme produces is checked for WCAG contrast in the test suite, and a built-in audit checks real pages. General tools make no such guarantee.
+- **Narrow access.** It runs only on Power Platform sites. A general dark mode usually asks to read and change data on every site you visit.
+
+What general tools do better:
+
+- **Every site.** They theme the whole web.
+- **Maturity.** They are long-established and widely tested.
+- **Resilience.** A Studio update can break a specific fix here until the extension is updated; a general tool degrades more evenly.
+
 ## Install (unpacked)
 
 1. Clone or download this repository.
