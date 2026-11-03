@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — settings (shared by content scripts, popup,
+ * Dark Mode for Power Platform — settings (shared by content scripts, popup,
  * options page and the service worker).
  *
  * Settings live in chrome.storage.sync so they follow the user's profile;

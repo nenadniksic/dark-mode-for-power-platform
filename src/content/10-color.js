@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — colour engine.
+ * Dark Mode for Power Platform — colour engine.
  *
  * Pure functions: parse CSS colours, convert between RGB/HSL, measure WCAG
  * contrast, and map a light-theme colour to its dark-theme counterpart by

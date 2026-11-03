@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 — 2026-11-03
+
+- Renamed from Canvas Studio Dark Mode to Dark Mode for Power Platform, now that it covers Power Automate and the whole maker portal as well as canvas Studio. Settings carry over unchanged.
+- The GitHub repository moved to [nenadniksic/dark-mode-for-power-platform](https://github.com/nenadniksic/dark-mode-for-power-platform). The old address redirects there.
+
 ## 1.2.0 — 2026-11-03
 
 ### Added

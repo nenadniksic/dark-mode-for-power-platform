@@ -1,6 +1,6 @@
 # Privacy
 
-Canvas Studio Dark Mode runs entirely inside your browser.
+Dark Mode for Power Platform runs entirely inside your browser.
 
 - It stores only its own settings (theme preferences). They are kept with your Chrome profile and, if Chrome Sync is on, Chrome carries them to your other devices.
 - It does not collect, transmit or sell any data. There is no telemetry, no analytics and no remote configuration.

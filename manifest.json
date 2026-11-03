@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Canvas Studio Dark Mode",
-  "short_name": "Studio Dark",
-  "version": "1.2.0",
+  "name": "Dark Mode for Power Platform",
+  "short_name": "PP Dark Mode",
+  "version": "1.2.1",
   "description": "A carefully crafted dark theme for Power Apps Studio, the maker portal and Power Automate. Your app's canvas stays as designed.",
   "minimum_chrome_version": "120",
   "icons": {
@@ -12,7 +12,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "Canvas Studio Dark Mode",
+    "default_title": "Dark Mode for Power Platform",
     "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -42,7 +42,7 @@
   "commands": {
     "toggle-dark-mode": {
       "suggested_key": { "default": "Alt+Shift+D", "mac": "Alt+Shift+D" },
-      "description": "Toggle Canvas Studio Dark Mode"
+      "description": "Toggle Dark Mode for Power Platform"
     }
   },
   "content_scripts": [

@@ -1,4 +1,4 @@
-# Canvas Studio Dark Mode
+# Dark Mode for Power Platform
 
 A carefully crafted dark theme for **Power Apps canvas Studio**, the maker portal and **Power Automate**, delivered as a Chrome / Edge extension (Manifest V3).
 
@@ -73,7 +73,7 @@ npm run build       # bundles theme/*.css into src/content/generated/theme-css.j
 npm run tokens      # regenerates the Fluent dark token spec from tools/data/fluent-light-tokens.json
 npm run icons       # renders icons/*.png from a tiny built-in rasteriser
 npm run standalone  # builds dist/standalone/capd-standalone.js for browser-driven checks without installing
-npm run package     # dist/canvas-studio-dark-mode-<version>.zip
+npm run package     # dist/dark-mode-for-power-platform-<version>.zip
 ```
 
 Load the folder as an unpacked extension after `npm run build`; the generated files are committed so a fresh clone loads as-is.

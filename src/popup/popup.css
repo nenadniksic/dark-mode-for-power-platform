@@ -30,7 +30,7 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-size: 13px; line-height: 1.4; width: 320px; }
+body { margin: 0; background: var(--bg); color: var(--text); font-size: 13px; line-height: 1.4; width: 336px; }
 .popup { padding: 14px 14px 10px; }
 h1 { font-size: 14px; font-weight: 600; margin: 0; }
 h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-2); margin: 0 0 6px; }

@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — style manager.
+ * Dark Mode for Power Platform — style manager.
  *
  * Owns every <style> element the extension injects into a document (or a
  * shadow root): the static theme, one override sheet per page stylesheet,

@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — DOM observer.
+ * Dark Mode for Power Platform — DOM observer.
  *
  * One MutationObserver per managed tree wires the page's changes to the
  * style manager (new / changed stylesheets) and the inline processor (new

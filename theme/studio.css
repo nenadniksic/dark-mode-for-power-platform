@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Canvas Studio Dark Mode — hand-tuned rules for Power Apps Studio
+   Dark Mode for Power Platform — hand-tuned rules for Power Apps Studio
    (authoring frame).  These load after the generated overrides, so they win
    ties on specificity; use !important to beat the page's own !important.
    Palette variables (--capd-*) are computed from the user's settings.

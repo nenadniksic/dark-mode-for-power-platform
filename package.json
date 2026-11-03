@@ -1,8 +1,10 @@
 {
-  "name": "canvas-studio-dark-mode",
-  "version": "1.2.0",
+  "name": "dark-mode-for-power-platform",
+  "version": "1.2.1",
   "private": true,
-  "description": "Dark mode for Power Apps canvas Studio and Power Automate (Chrome extension, Manifest V3).",
+  "repository": { "type": "git", "url": "https://github.com/nenadniksic/dark-mode-for-power-platform.git" },
+  "homepage": "https://github.com/nenadniksic/dark-mode-for-power-platform",
+  "description": "Dark mode for Power Apps Studio, the maker portal and Power Automate (Chrome extension, Manifest V3).",
   "scripts": {
     "build": "node tools/build.mjs",
     "test": "node --test test/*.test.mjs",

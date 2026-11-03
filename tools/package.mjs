@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * Packages the extension for the Chrome Web Store (or manual install) as
- * dist/canvas-studio-dark-mode-<version>.zip, containing only what the
+ * dist/dark-mode-for-power-platform-<version>.zip, containing only what the
  * manifest needs: manifest, src, theme-free generated code, icons, licence.
  */
 import fs from 'node:fs';
@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(here, '..');
 const manifest = JSON.parse(fs.readFileSync(path.join(rootDir, 'manifest.json'), 'utf8'));
-const out = path.join(rootDir, 'dist', `canvas-studio-dark-mode-${manifest.version}.zip`);
+const out = path.join(rootDir, 'dist', `dark-mode-for-power-platform-${manifest.version}.zip`);
 fs.mkdirSync(path.dirname(out), { recursive: true });
 if (fs.existsSync(out)) fs.unlinkSync(out);
 

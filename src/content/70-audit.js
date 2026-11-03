@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — contrast audit (diagnostics).
+ * Dark Mode for Power Platform — contrast audit (diagnostics).
  *
  * CAPD.audit() walks a themed document and reports ink that does not stand
  * out from the surface behind it: text below WCAG 2.1 AA (4.5:1, or 3:1

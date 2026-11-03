@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — content-script entry point.
+ * Dark Mode for Power Platform — content-script entry point.
  *
  * Decides whether this frame is part of the Power Apps maker experience,
  * applies a flash-free fallback from a cached state, loads settings and

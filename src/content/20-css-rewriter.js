@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — CSSOM rewriter.
+ * Dark Mode for Power Platform — CSSOM rewriter.
  *
  * Walks a stylesheet's rules and produces an override stylesheet containing
  * only the colour-bearing declarations, each mapped to its dark counterpart.

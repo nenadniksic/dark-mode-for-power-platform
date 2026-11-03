@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — static theme assembly.
+ * Dark Mode for Power Platform — static theme assembly.
  *
  * Builds the three static CSS blocks the style manager installs:
  *   static  – palette variables + Fluent UI v9 dark design tokens (first)

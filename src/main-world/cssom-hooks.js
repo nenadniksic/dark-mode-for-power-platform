@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — MAIN-world CSSOM hooks.
+ * Dark Mode for Power Platform — MAIN-world CSSOM hooks.
  *
  * Runs in the page's own JavaScript world before any page script.  Studio's
  * CSS-in-JS libraries (Griffel, merge-styles, Aphrodite, Monaco) add rules

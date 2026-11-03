@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — inline colour processor.
+ * Dark Mode for Power Platform — inline colour processor.
  *
  * Elements that carry colours in their style attribute (or in SVG fill /
  * stroke presentation attributes) cannot be reached by stylesheet

@@ -1,5 +1,5 @@
 /*
- * Canvas Studio Dark Mode — service worker.
+ * Dark Mode for Power Platform — service worker.
  *
  * Responsibilities: seed defaults, keep the toolbar badge in step with the
  * enabled state, handle the keyboard shortcut, and relay cross-origin
@@ -17,7 +17,7 @@ async function updateBadge() {
   try {
     await chrome.action.setBadgeText({ text: s.enabled ? '' : 'OFF' });
     await chrome.action.setBadgeBackgroundColor({ color: '#5c5c5c' });
-    await chrome.action.setTitle({ title: s.enabled ? 'Canvas Studio Dark Mode: on' : 'Canvas Studio Dark Mode: off' });
+    await chrome.action.setTitle({ title: s.enabled ? 'Dark Mode for Power Platform: on' : 'Dark Mode for Power Platform: off' });
   } catch (e) { /* action API may be unavailable during install */ }
 }
 

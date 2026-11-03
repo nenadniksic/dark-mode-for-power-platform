@@ -1,11 +1,11 @@
-# Chrome Web Store Listing — Canvas Studio Dark Mode
+# Chrome Web Store Listing — Dark Mode for Power Platform
 
 > Last Updated: 2026-11-03
 
 ## Store Listing
 
 **Extension Name**
-Canvas Studio Dark Mode
+Dark Mode for Power Platform
 
 **Short Description** (127 / 132 characters, same as manifest.json)
 A carefully crafted dark theme for Power Apps Studio, the maker portal and Power Automate. Your app's canvas stays as designed.
@@ -13,7 +13,7 @@ A carefully crafted dark theme for Power Apps Studio, the maker portal and Power
 **Detailed Description** (plain text: the store strips Markdown)
 
 ```
-Canvas Studio Dark Mode turns Power Apps canvas Studio, the Power Apps maker portal and Power Automate dark, while the app you are building keeps its own colours.
+Dark Mode for Power Platform turns Power Apps canvas Studio, the Power Apps maker portal and Power Automate dark, while the app you are building keeps its own colours.
 
 FEATURES
 • Dark Studio: command bar, formula bar, tree view, Insert, Data and Media panes, properties, dialogs, menus and tooltips.
@@ -43,11 +43,11 @@ PERMISSIONS
 • "Read and change your data on powerapps.com, powerautomate.com and related Microsoft sites": needed to recolour those pages. The extension runs nowhere else, and never on published apps.
 
 SUPPORT
-Report a problem or suggest an improvement: https://github.com/nenadniksic/canvas-apps-darkmode/issues
+Report a problem or suggest an improvement: https://github.com/nenadniksic/dark-mode-for-power-platform/issues
 
 Power Apps and Power Automate are trademarks of Microsoft Corporation. This extension is independent and is not affiliated with or endorsed by Microsoft.
 
-Version 1.2.0: Neon style, glowing controls in Neon, and fixes for property labels and command-bar buttons in Studio.
+Version 1.2.1: renamed to Dark Mode for Power Platform. Includes the Neon style with glowing controls, and fixes for property labels and command-bar buttons in Studio.
 ```
 
 **Category**
@@ -119,7 +119,7 @@ Notes for the form: the only stored data is the user's own theme preferences, wh
 ## Privacy Policy
 
 **Privacy Policy URL**
-https://github.com/nenadniksic/canvas-apps-darkmode/blob/main/PRIVACY.md
+https://github.com/nenadniksic/dark-mode-for-power-platform/blob/main/PRIVACY.md
 
 ## Distribution
 
@@ -131,14 +131,15 @@ https://github.com/nenadniksic/canvas-apps-darkmode/blob/main/PRIVACY.md
 
 **Publisher Name**: Nenad Niksic
 **Contact Email**: (to fill in: a monitored address; Google sends policy and takedown notices here)
-**Support URL**: https://github.com/nenadniksic/canvas-apps-darkmode/issues
-**Homepage URL**: https://github.com/nenadniksic/canvas-apps-darkmode
+**Support URL**: https://github.com/nenadniksic/dark-mode-for-power-platform/issues
+**Homepage URL**: https://github.com/nenadniksic/dark-mode-for-power-platform
 
 ## Version History
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 1.2.0 | 2026-11-03 | Neon style with glowing controls; property label and command-bar fixes; light insert button over the canvas. | Draft |
+| 1.2.1 | 2026-11-03 | Renamed from Canvas Studio Dark Mode, now that it covers Power Automate and the whole maker portal. | Draft |
+| 1.2.0 | 2026-11-03 | Neon style with glowing controls; property label and command-bar fixes; light insert button over the canvas. | Not submitted |
 | 1.1.0 | 2026-11-03 | Power Automate support; brand-aware accents; Studio sprite icon and colour picker fixes; contrast audit. | Not submitted |
 | 1.0.0 | 2026-11-03 | Initial release. | Not submitted |
 

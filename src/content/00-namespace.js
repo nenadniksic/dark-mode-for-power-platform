@@ -1,12 +1,12 @@
 /*
- * Canvas Studio Dark Mode — shared namespace and constants for the content
+ * Dark Mode for Power Platform — shared namespace and constants for the content
  * scripts.  Every content-script file attaches itself to globalThis.CAPD.
  */
 (function (root) {
   'use strict';
   const CAPD = (root.CAPD = root.CAPD || {});
 
-  CAPD.VERSION = '1.2.0';
+  CAPD.VERSION = '1.2.1';
   CAPD.ATTR = 'data-capd';                 // on <html>: "dark" while active
   CAPD.INLINE_ATTR = 'data-capd-inline';   // on elements whose inline colours were adapted
   CAPD.REV_ATTR = 'data-capd-rev';         // set by the MAIN-world CSSOM hook on <style>/<link>
