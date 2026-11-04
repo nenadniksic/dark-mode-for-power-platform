@@ -32,7 +32,7 @@
   /** null for Always dark; otherwise { dark, text, until, st }. */
   function modeState(s) {
     if (s.mode === 'system') return { dark: mqDark.matches, text: 'Light while your system is light', until: null, st: null };
-    const st = schedule.state(s);
+    const st = schedule.current(s); // a switch by hand included
     return st ? { dark: st.dark, text: schedule.summary(st), until: st.until ? st.until.at : null, st } : null;
   }
 
@@ -49,7 +49,7 @@
     setValue(darkTo, s.darkTo);
     let note = `${schedule.summary(st)}.`;
     if (s.mode === 'sun' && st.location) {
-      const span = schedule.darkSpan(st);
+      const span = st.overridden ? '' : schedule.darkSpan(st);
       const loc = st.location;
       note = `${span ? `Dark ${span}.` : note} Sunset and sunrise for ${loc.source === 'manual' ? schedule.placeText(loc) : `${loc.place}, from your time zone`}.`;
     } else if (s.mode === 'sun') {
@@ -59,6 +59,11 @@
     const locButton = $('#location');
     locButton.hidden = s.mode !== 'sun';
     locButton.textContent = st.location ? 'Change location' : 'Set location';
+    // Switch by hand until the schedule next changes, like the keyboard shortcut.
+    const flipButton = $('#flip');
+    flipButton.hidden = !s.enabled || st.empty;
+    flipButton.textContent = st.overridden ? 'Back to the schedule' : `Switch to ${st.dark ? 'light' : 'dark'}`;
+    flipButton.title = st.overridden ? '' : 'Until the schedule next changes';
   }
 
   function render(s, tabInfo) {
@@ -94,6 +99,7 @@
     for (const r of radios) r.addEventListener('change', () => { if (r.checked) settings.save({ [r.name]: r.value }); });
     for (const t of [darkFrom, darkTo]) t.addEventListener('change', () => { if (schedule.minutes(t.value) >= 0) settings.save({ [t.id]: t.value }); });
     $('#location').addEventListener('click', () => chrome.runtime.openOptionsPage());
+    $('#flip').addEventListener('click', async () => settings.save(schedule.flip(await settings.load())));
     mqDark.addEventListener('change', () => { if (shown) render(...shown); });
     setInterval(() => { if (shown) render(...shown); }, 30000);
     for (const t of toggles) t.addEventListener('change', () => {

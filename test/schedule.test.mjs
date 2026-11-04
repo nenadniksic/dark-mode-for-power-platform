@@ -164,7 +164,7 @@ test('each choice keeps its hours and location while you switch between them, an
   let s = await settings.load();
   assert.deepEqual([s.mode, s.darkFrom, s.darkTo, s.latitude, s.longitude], ['custom', '21:30', '06:15', 44.82, 20.46]);
 
-  await settings.save({ enabled: false }); // the toggle, the shortcut
+  await settings.save({ enabled: false }); // the master switch
   await settings.save({ enabled: true });
   s = await settings.load();
   assert.equal(s.mode, 'custom');
@@ -175,4 +175,84 @@ test('each choice keeps its hours and location while you switch between them, an
   schedule.state(frozen, local(2026, 11, 4, 22));
   assert.deepEqual(await settings.load(), s);
   await settings.save({ ...settings.DEFAULTS });
+});
+
+/* ---- switching by hand -------------------------------------------------- */
+
+const night = { ...base, mode: 'custom', darkFrom: '19:00', darkTo: '07:00' };
+const belgrade = { ...base, mode: 'sun', latitude: 44.82, longitude: 20.46 };
+
+test('switched to light in the dark hours, it stays light until the schedule says light anyway', () => {
+  const at = local(2026, 11, 4, 21);
+  const s = { ...night, ...schedule.flip(night, at) };
+  assert.deepEqual(s.scheduleOverride, { mode: 'custom', dark: false, at });
+  const now = schedule.current(s, local(2026, 11, 4, 23));
+  assert.equal(now.dark, false);
+  assert.equal(now.overridden, true);
+  assert.equal(now.resumes.at, local(2026, 11, 5, 7), 'the schedule takes over at the end of the dark hours');
+  assert.equal(now.until.at, local(2026, 11, 5, 19), 'so what is shown next changes when they start again');
+  assert.equal(schedule.summary(now), `Light until ${schedule.clock(local(2026, 11, 5, 19))}, switched by you`);
+  assert.equal(schedule.isDark(s, local(2026, 11, 5, 6, 59)), false);
+  const morning = schedule.current(s, local(2026, 11, 5, 7, 1));
+  assert.equal(morning.overridden, false);
+  assert.equal(morning.dark, false);
+  assert.equal(schedule.isDark(s, local(2026, 11, 5, 19, 1)), true, 'dark again at 19:00, as usual');
+});
+
+test('switched to dark in the light hours, it stays dark through the night', () => {
+  const at = local(2026, 11, 4, 12);
+  const s = { ...night, ...schedule.flip(night, at) };
+  const st = schedule.current(s, local(2026, 11, 4, 13));
+  assert.equal(st.dark, true);
+  assert.equal(st.since.at, at);
+  assert.equal(st.until.at, local(2026, 11, 5, 7));
+  assert.equal(schedule.isDark(s, local(2026, 11, 4, 18, 59)), true);
+  assert.equal(schedule.isDark(s, local(2026, 11, 5, 6, 59)), true);
+  assert.equal(schedule.isDark(s, local(2026, 11, 5, 7, 1)), false);
+});
+
+test('sunset to sunrise: switched to light after dark, the next sunset turns it dark again', () => {
+  const at = local(2026, 11, 4, 21);
+  const s = { ...belgrade, ...schedule.flip(belgrade, at) };
+  const st = schedule.current(s, at + MIN);
+  assert.equal(st.dark, false);
+  assert.equal(st.resumes.kind, 'sunrise');
+  assert.equal(st.until.kind, 'sunset');
+  assert.ok(st.until.at > local(2026, 11, 5, 16) && st.until.at < local(2026, 11, 5, 17), 'the sunset of 5 November');
+  assert.match(schedule.summary(st), /^Light until sunset at .+, switched by you$/);
+  assert.equal(schedule.isDark(s, st.until.at + MIN), true);
+});
+
+test('pressing again goes back to the schedule; Always dark and Follow system keep the master switch', () => {
+  const at = local(2026, 11, 4, 21);
+  const once = { ...night, ...schedule.flip(night, at) };
+  assert.deepEqual(schedule.flip(once, at + MIN), { scheduleOverride: null });
+  assert.equal(schedule.isDark({ ...once, scheduleOverride: null }, at + MIN), true);
+  assert.deepEqual(schedule.flip({ ...base, mode: 'dark' }, at), { enabled: false });
+  assert.deepEqual(schedule.flip({ ...base, mode: 'system' }, at), { enabled: false });
+  // With the extension off, the shortcut turns it on: dark even in the light hours.
+  const off = { ...night, enabled: false };
+  assert.deepEqual(schedule.flip(off, local(2026, 11, 4, 12)), { enabled: true, scheduleOverride: { mode: 'custom', dark: true, at: local(2026, 11, 4, 12) } });
+  assert.deepEqual(schedule.flip(off, at), { enabled: true, scheduleOverride: null });
+  assert.deepEqual(schedule.flip({ ...base, enabled: false }, at), { enabled: true, scheduleOverride: null });
+});
+
+test('a switch counts only under the appearance it was made in, and not from the future', () => {
+  const at = local(2026, 11, 4, 21);
+  const o = { mode: 'custom', dark: false, at };
+  assert.equal(schedule.isDark({ ...night, scheduleOverride: o }, at + MIN), false);
+  assert.equal(schedule.isDark({ ...belgrade, scheduleOverride: o }, at + MIN), true, 'made under custom hours');
+  assert.equal(schedule.isDark({ ...night, scheduleOverride: o }, at - MIN), true, 'the clock was set back');
+  // Hours changed after the switch: the new hours' next change ends it.
+  assert.equal(schedule.isDark({ ...night, darkFrom: '22:00', scheduleOverride: o }, local(2026, 11, 4, 21, 30)), false);
+  assert.equal(schedule.isDark({ ...night, darkFrom: '22:00', scheduleOverride: o }, local(2026, 11, 4, 22, 1)), true);
+});
+
+test('settings keep a switch only in a sound shape', () => {
+  const at = local(2026, 11, 4, 21);
+  assert.equal(settings.DEFAULTS.scheduleOverride, null);
+  assert.deepEqual(settings.normalize({ scheduleOverride: { mode: 'sun', dark: true, at, extra: 1 } }).scheduleOverride, { mode: 'sun', dark: true, at });
+  for (const bad of [{ mode: 'dark', dark: true, at }, { mode: 'sun', dark: 'yes', at }, { mode: 'sun', dark: true, at: 'now' }, 'sun', 1]) {
+    assert.equal(settings.normalize({ scheduleOverride: bad }).scheduleOverride, null, JSON.stringify(bad));
+  }
 });

@@ -145,6 +145,42 @@ test('the other appearances arm no timer', () => {
   assert.equal(readCache().until, null);
 });
 
+test('a switch by hand turns the theme on in the light hours, until the dark hours are over', () => {
+  now = local(18, 10);
+  changeSettings({ mode: 'custom', darkFrom: '19:00', darkTo: '07:00' });
+  assert.equal(CAPD.active, false);
+  changeSettings(CAPD.schedule.flip(current, now)); // the shortcut
+  assert.equal(CAPD.active, true);
+  assert.equal(html.getAttribute('data-capd'), 'dark');
+  assert.equal(readCache().until, local(24 + 7), 'cached as on until 07:00 tomorrow, not 19:00 today');
+  assert.equal(lastTimer().ms, 60 * 1000);
+
+  now = local(18, 50);
+  captured(() => lastTimer().cb());
+  assert.equal(CAPD.active, true, 'still on a minute later');
+
+  // Pressed again before 19:00: back to the schedule, which says light.
+  now = local(18, 55);
+  changeSettings(CAPD.schedule.flip(current, now));
+  assert.equal(current.scheduleOverride, null);
+  assert.equal(CAPD.active, false);
+
+  // Pressed once more: on, and at 19:00 the schedule takes over without a flicker.
+  now = local(18, 56);
+  changeSettings(CAPD.schedule.flip(current, now));
+  assert.equal(CAPD.active, true);
+  now = local(19, 30);
+  captured(() => lastTimer().cb());
+  assert.equal(CAPD.active, true);
+  assert.equal(CAPD.schedule.current(current, now).overridden, false, 'the switch has run out');
+
+  // So a press now is a new switch, to light until 07:00.
+  changeSettings(CAPD.schedule.flip(current, now));
+  assert.equal(CAPD.active, false);
+  assert.equal(current.scheduleOverride.dark, false);
+  changeSettings({ scheduleOverride: null });
+});
+
 test('on the next page load, a cached "on" that has run out is not painted before the settings arrive', () => {
   // Leave a cache that says "on until 18:00", then load the page at 18:05.
   now = local(12);

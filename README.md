@@ -52,7 +52,7 @@ Open the toolbar popup or the full options page (`All settings`).
 
 | Setting | What it does |
 | --- | --- |
-| Dark mode | Master switch (also **Alt+Shift+D**, configurable at `chrome://extensions/shortcuts`). |
+| Dark mode | Master switch. **Alt+Shift+D** (configurable at `chrome://extensions/shortcuts`) turns it on and off; under *Sunset to sunrise* or *Custom hours* it switches between dark and light until the schedule next changes. |
 | Appearance | *Always dark*; *Follow system* (dark only while your OS colour scheme is dark); *Sunset to sunrise*; or *Custom hours* (dark between two times you pick, overnight or within the day). Each choice keeps its own hours and location while you try another, and the master switch leaves the choice alone. |
 | Surface | *Dim*, *Dark* (Fluent UI's dark theme greys) or *Black* for OLED-style surfaces. |
 | Style | *Classic* keeps each product's own colours. *Neon* is a cyberpunk take: violet-black surfaces, hot-pink accents everywhere and cyan focus rings. |
@@ -65,6 +65,8 @@ Open the toolbar popup or the full options page (`All settings`).
 Settings sync with your browser profile and apply instantly to open tabs.
 
 **Scheduled appearances.** *Sunset to sunrise* works the times out on your computer, with no location permission and no network. By default it uses the city your computer's time zone is named after (from the tz database: *Belgrade* for `Europe/Belgrade`), which is close enough for most places; enter your own latitude and longitude in the options for exact times. Where the time zone names no city (a `UTC` clock), it uses the custom hours until you set a location. Inside the polar circles it stays dark through the polar night and light through the midnight sun. Both schedules follow this computer's clock, daylight-saving changes included. Visible tabs switch at the scheduled minute. After the computer wakes from sleep they catch up within a minute, and a hidden tab catches up as soon as you return to it.
+
+**Switching by hand under a schedule.** For the other look for a while, press **Alt+Shift+D** or use *Switch to light* / *Switch to dark* in the popup. The switch lasts until the schedule next changes, and the schedule then carries on as usual: switched to light at 21:00 with dark hours of 19:00 to 07:00, it stays light through the night, and at 19:00 the next day it turns dark again. Press again (or *Back to the schedule*) to return to the schedule at once. The switch is kept on this computer only and is not synced, and choosing another appearance or using the master switch ends it. With the extension switched off, Alt+Shift+D turns it on, dark even in the light hours. Under *Always dark* and *Follow system* it is the master switch, as before.
 
 ## How it works
 

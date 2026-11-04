@@ -5,7 +5,7 @@
  * enabled state, handle the keyboard shortcut, and relay cross-origin
  * stylesheet fetches for content scripts when CORS blocks a direct read.
  */
-importScripts('../shared/settings.js');
+importScripts('../shared/settings.js', '../shared/timezones.js', '../shared/schedule.js');
 
 const settings = globalThis.CAPD.settings;
 const cssCache = new Map(); // url -> { text, at }
@@ -33,7 +33,9 @@ chrome.storage.onChanged.addListener((changes) => { if (changes[settings.KEY]) u
 chrome.commands.onCommand.addListener(async (command) => {
   if (command !== 'toggle-dark-mode') return;
   const s = await settings.load();
-  await settings.save({ enabled: !s.enabled });
+  // Flips what is shown: under a schedule, until the schedule next changes
+  // (schedule.js); otherwise it is the master switch.
+  await settings.save(globalThis.CAPD.schedule.flip(s));
 });
 
 function allowedCssUrl(url) {

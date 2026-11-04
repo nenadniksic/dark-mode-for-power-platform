@@ -171,9 +171,67 @@
     return { ...base, ...fromEvents(hoursEvents(from, to, t), t), empty: false };
   }
 
-  /** Whether the theme should be on at `now` under a scheduled mode (true for every other mode). */
+  /* ---------------------------------------------------------------- */
+  /* Switching by hand                                                */
+  /* ---------------------------------------------------------------- */
+  /*
+   * Under a schedule, Alt+Shift+D (or the popup's button) flips the theme
+   * until the schedule next changes, as an operating system's automatic
+   * appearance does.  Switched to light at 21:00 with dark hours of 19:00 to
+   * 07:00, it stays light through the night; at 07:00 the schedule says light
+   * anyway and takes over again, so it turns dark at 19:00 as usual.  Pressed
+   * again before then, it goes back to the schedule at once.
+   *
+   * The switch is settings.scheduleOverride, { mode, dark, at }, which
+   * settings.js keeps on this computer only.  It is never deleted when it
+   * runs out: it simply stops counting at the first scheduled change after
+   * `at`.  Choosing another appearance or using the master switch clears it.
+   */
+  function overrideFor(s, st, now) {
+    const o = s && s.scheduleOverride;
+    if (!o || o.mode !== s.mode || !(o.at <= now)) return null;
+    if (st.since && st.since.at > o.at) return null; // the schedule has changed since
+    return o;
+  }
+
+  /**
+   * What is shown at `now` under a scheduled mode: state() with any switch by
+   * hand applied, plus `overridden` and `resumes` (the scheduled change at
+   * which the schedule takes over again).  null for the other modes.
+   */
+  function current(s, now, zone) {
+    const t = Number.isFinite(now) ? now : Date.now();
+    const st = state(s, t, zone);
+    if (!st) return null;
+    const o = overrideFor(s, st, t);
+    if (!o || o.dark === st.dark) return { ...st, overridden: false, resumes: null };
+    // At st.until the schedule arrives where the switch already is, so what
+    // is shown next changes at st.then.
+    return { ...st, dark: o.dark, since: { at: o.at, kind: 'switch' }, until: st.then, then: null, overridden: true, resumes: st.until };
+  }
+
+  /**
+   * The settings change for "switch what I see" (Alt+Shift+D and the popup's
+   * button).  Under a schedule it flips the theme until the schedule next
+   * changes, or goes back to the schedule after an earlier flip.  With the
+   * extension off it turns it on, dark even in scheduled light hours.  Under
+   * Always dark and Follow system it is the master switch, as before.
+   */
+  function flip(s, now, zone) {
+    const t = Number.isFinite(now) ? now : Date.now();
+    if (!s.enabled) {
+      const st = state(s, t, zone);
+      return { enabled: true, scheduleOverride: st && !st.dark ? { mode: s.mode, dark: true, at: t } : null };
+    }
+    const cur = current(s, t, zone);
+    if (!cur) return { enabled: false };
+    if (cur.overridden) return { scheduleOverride: null };
+    return { scheduleOverride: { mode: s.mode, dark: !cur.dark, at: t } };
+  }
+
+  /** Whether the theme should be on at `now` under a scheduled mode, switches by hand included (true for every other mode). */
   function isDark(s, now, zone) {
-    const st = state(s, now, zone);
+    const st = current(s, now, zone);
     return st ? st.dark : true;
   }
 
@@ -186,9 +244,10 @@
   const NAMES = { sunrise: 'sunrise', sunset: 'sunset', 'polar-day': 'midnight sun', 'polar-night': 'polar night' };
   const named = (e) => (NAMES[e.kind] ? `${NAMES[e.kind]} at ${clock(e.at)}` : clock(e.at));
 
-  /** One line on what the schedule does next ("Light until sunset at 4:38 PM"). */
+  /** One line on what the schedule does next ("Light until sunset at 4:38 PM"), for state() or current(). */
   function summary(st) {
     if (!st) return '';
+    if (st.overridden) return `${st.dark ? 'Dark' : 'Light'}${st.until ? ` until ${named(st.until)}` : ''}, switched by you`;
     if (st.empty) return 'Pick two different times';
     if (!st.until) return st.dark ? 'Dark all day: the sun stays down here' : 'Light all day: the sun stays up here';
     return `${st.dark ? 'Dark' : 'Light'} until ${named(st.until)}`;
@@ -209,5 +268,5 @@
     return loc.source === 'manual' ? coords : `${loc.place} (${coords}), from your time zone`;
   }
 
-  CAPD.schedule = { MODES, HOUR, minutes, isScheduled, timeZone, zoneLocation, location, state, isDark, summary, darkSpan, placeText, clock };
+  CAPD.schedule = { MODES, HOUR, minutes, isScheduled, timeZone, zoneLocation, location, state, current, flip, isDark, summary, darkSpan, placeText, clock };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

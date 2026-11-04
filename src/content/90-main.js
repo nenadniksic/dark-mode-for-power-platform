@@ -244,7 +244,7 @@
   let scheduleTimer = 0;
   function scheduleUntil(s) {
     if (!s.enabled || !CAPD.schedule || !CAPD.schedule.isScheduled(s)) return null;
-    const st = CAPD.schedule.state(s);
+    const st = CAPD.schedule.current(s); // what is shown, a switch by hand included
     return st && st.until ? st.until.at : null;
   }
   function armSchedule(s, until) {

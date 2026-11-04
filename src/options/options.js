@@ -42,7 +42,7 @@
 
     function show(s) {
       current = s;
-      const st = schedule.state(s);
+      const st = schedule.current(s); // a switch by hand included
       const fallback = !!(st && st.fallback);
       hoursRow.hidden = !(s.mode === 'custom' || fallback);
       hoursHint.textContent = fallback ? 'Sunset to sunrise has no location yet (see below), so it uses these hours for now.' : hoursHintText;
@@ -68,6 +68,7 @@
       note.hidden = !st;
       if (!st) return;
       if (st.empty) note.textContent = 'Pick two different times: with the same start and end, dark mode never turns on.';
+      else if (st.overridden) note.textContent = `${schedule.summary(st)}. The shortcut or the popup's button goes back to the schedule.`;
       else if (!st.dark && schedule.darkSpan(st)) note.textContent = `Light now. Next dark period: ${schedule.darkSpan(st)}.`;
       else note.textContent = `${schedule.summary(st)}.`;
     }
