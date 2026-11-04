@@ -3,7 +3,8 @@
  *
  * Builds the three static CSS blocks the style manager installs:
  *   static  – palette variables + Fluent UI v9 dark design tokens (first)
- *   tuned   – hand-written Studio / Monaco / Fluent v8 / maker-portal rules
+ *   tuned   – hand-written Studio / Monaco / Fluent v8 / maker-portal /
+ *             SharePoint rules
  *             (after the generated overrides, so they win ties)
  *   inline  – rules that honour the --capd-i-* variables set by the inline
  *             processor
@@ -287,6 +288,7 @@
     let css = (t.studio || '') + (t.monaco || '') + (t.fluent8 || '');
     if (role === 'maker' || role === 'maker-frame' || role === 'studio-host' || role === 'automate' || role === 'automate-frame') css += t.maker || '';
     if (role === 'automate' || role === 'automate-frame') css += t.automate || '';
+    if (role === 'sharepoint' || role === 'sharepoint-frame') css += t.sharepoint || '';
     css += t.neon || ''; // every rule there is gated on data-capd-look="neon"
     return rewriter.scoped(css, scope ? LIMIT() : null);
   }

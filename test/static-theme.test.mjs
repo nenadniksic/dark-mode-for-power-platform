@@ -45,6 +45,10 @@ test('static and tuned layers are scoped away from the canvas, tuned rules use :
   // maker rules only for maker roles
   assert.ok(!CAPD.staticTheme.buildTuned(settings, 'studio', true).includes('o365sx-waffle'));
   assert.ok(CAPD.staticTheme.buildTuned(settings, 'studio-host', true).includes('o365sx-waffle'));
+  // SharePoint gets its own rules, and none of the maker portal's
+  const sp = CAPD.staticTheme.buildTuned(settings, 'sharepoint', true);
+  assert.ok(sp.includes(CAPD.themeCSS.sharepoint.slice(0, 40)));
+  assert.ok(!sp.includes('o365sx-waffle'));
 });
 
 test('shadow roots get unscoped CSS', () => {

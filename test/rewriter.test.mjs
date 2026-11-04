@@ -128,7 +128,33 @@ test('shorthands declared with var() are rewritten even though their longhands r
   const css = rewriter.rewriteRules([bg], ctx());
   assert.equal(css, '.react-flow__controls-button{'
     + 'background:var(--capd-bg-xy-controls-button-background-color, var(--capd-bg-xy-controls-button-background-color-default, var(--xy-controls-button-background-color-default))) !important;'
-    + 'border-bottom:1px solid var(--capd-bd-xy-controls-button-border-color-default, var(--xy-controls-button-border-color-default)) !important;}');
+    + 'border-bottom-color:var(--capd-bd-xy-controls-button-border-color-default, var(--xy-controls-button-border-color-default)) !important;}');
+});
+
+test('a border shorthand is recoloured through its colour longhand, never re-asserting width or style', () => {
+  // SharePoint's command-bar buttons: a Fluent reset style with a var() width,
+  // then atomic classes that zero the widths.  Re-emitting `border:` drew a box.
+  const reset = { type: 1, selectorText: '.r1f29ykk', style: pendingDecl(
+    { border: 'var(--strokeWidthThin) solid var(--sp-button-border)' },
+    ['border-top-width', 'border-top-style', 'border-top-color']) };
+  assert.equal(rewriter.rewriteRules([reset], ctx()), '.r1f29ykk{border-color:var(--capd-bd-sp-button-border, var(--sp-button-border)) !important;}');
+  const tokenOnly = { type: 1, selectorText: '.r2', style: pendingDecl({ border: 'var(--strokeWidthThin) solid var(--colorNeutralStroke1)' }, ['border-top-width', 'border-top-color']) };
+  assert.equal(rewriter.rewriteRules([tokenOnly], ctx({ isExcludedVar: (n) => n === '--colorNeutralStroke1' })), '', 'a width variable is not a colour');
+  assert.equal(rewriter.colorToken('var(--strokeWidthThin) solid var(--colorNeutralStroke1)'), 'var(--colorNeutralStroke1)');
+  assert.equal(rewriter.colorToken('1px dashed rgb(1, 2, 3)'), 'rgb(1, 2, 3)');
+  assert.equal(rewriter.colorToken('underline currentColor'), 'currentColor');
+  assert.equal(rewriter.colorToken('var(--borderWidth) solid'), null);
+  assert.equal(rewriter.colorToken('var(--a) var(--b)'), undefined, 'two candidates: ambiguous');
+  assert.equal(rewriter.colorToken('var(--sp-grid-outer-shell-border,1px solid var(--colorNeutralStroke3))'), undefined, 'one var() alone may hold the whole border');
+  const shell = { type: 1, selectorText: '.shell', style: pendingDecl({ border: 'var(--sp-shell,1px solid var(--colorNeutralStroke3))' }, ['border-top-width', 'border-top-color']) };
+  assert.equal(rewriter.rewriteRules([shell], ctx()), '.shell{border:var(--capd-bd-sp-shell, 1px solid var(--colorNeutralStroke3)) !important;}', 'kept as a shorthand');
+});
+
+test('a border-image shorthand with var() colours is rewritten (SharePoint list row dividers)', () => {
+  const row = { type: 1, selectorText: '.odspSpartanList .row', style: pendingDecl(
+    { 'border-image': 'linear-gradient(0deg,var(--bottom-row-color) 2px,transparent 2px 10px) 1' },
+    ['border-image-source', 'border-image-slice', 'border-image-width']) };
+  assert.equal(rewriter.rewriteRules([row], ctx()), '.odspSpartanList .row{border-image:linear-gradient(0deg,var(--capd-bd-bottom-row-color, var(--bottom-row-color)) 2px,transparent 2px 10px) 1 !important;}');
 });
 
 test('shorthands are left alone when their colour longhand has a real value or no var() is involved', () => {

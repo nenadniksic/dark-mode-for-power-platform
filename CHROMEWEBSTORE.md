@@ -1,60 +1,32 @@
 # Chrome Web Store Listing — Dark Mode for Power Platform
 
-> Last Updated: 2026-11-03
+> Last Updated: 2026-11-04
 
 ## Store Listing
 
 **Extension Name**
 Dark Mode for Power Platform
 
-**Short Description** (127 / 132 characters, same as manifest.json)
-A carefully crafted dark theme for Power Apps Studio, the maker portal and Power Automate. Your app's canvas stays as designed.
+**Short Description** (118 / 132 characters, same as manifest.json)
+A carefully crafted dark theme for Power Apps Studio, the maker portal, Power Automate and, if you choose, SharePoint.
 
 **Detailed Description** (plain text: the store strips Markdown)
 
 ```
-Dark Mode for Power Platform turns Power Apps canvas Studio, the Power Apps maker portal and Power Automate dark, while the app you are building keeps its own colours.
+Dark Mode for Power Platform makes Power Apps Studio, the Power Apps maker portal and Power Automate dark. The app you are building keeps its own colours, and colour pickers show true colours.
 
-FEATURES
-• Dark Studio: command bar, formula bar, tree view, Insert, Data and Media panes, properties, dialogs, menus and tooltips.
-• Your app stays as designed: the canvas you are editing, the colour swatches and the colour picker always show true colours.
-• Power Automate too: home, My flows, flow details, the new and the classic flow designer, templates, approvals and monitoring, and the Flows pages inside the Power Apps portal.
-• Two styles: Classic keeps each product's own accent colours. Neon is a cyberpunk look with violet-black surfaces, hot-pink accents and glowing controls.
-• Dim, Dark or Black surfaces, a high-contrast text option, and a dark or light canvas backdrop.
-• Readable by design: text and controls meet WCAG AA contrast, and AAA with high-contrast text.
-• Follow your system's light or dark setting, or stay dark. Toggle any time with Alt+Shift+D.
+Choose a Classic or Neon style and a Dim, Dark or Black surface. Text is checked for readable contrast. Toggle it with Alt+Shift+D.
 
-WHY A DEDICATED DARK MODE
-• Your app stays true: general dark modes recolour everything, including the app you are designing, so a white app looks dark. This one never touches your app.
-• Colour pickers show real colours: the colour you pick is the colour you see.
-• Made for Studio: icons, property labels, toolbars and panes are tuned one by one, not left to generic rules.
-• Tested readability: every colour pairing is checked for WCAG contrast.
-• Narrow access: it runs only on Power Platform sites, not on every site you visit.
+It runs only on Power Platform sites, and on SharePoint if you turn that on. It collects no data.
 
-HOW TO USE
-1. Install the extension and open make.powerapps.com or make.powerautomate.com.
-2. Edit a canvas app: Studio turns dark straight away.
-3. Click the toolbar icon to change the style, surface and other options, or open All settings.
-
-PRIVACY
-The extension collects no data: no analytics, no accounts, no remote configuration. Your preferences are kept in your browser and follow your Chrome profile through Chrome Sync. It only changes how the pages look; nothing about your apps, flows or data leaves your browser.
-
-PERMISSIONS
-• "Read and change your data on powerapps.com, powerautomate.com and related Microsoft sites": needed to recolour those pages. The extension runs nowhere else, and never on published apps.
-
-SUPPORT
-Report a problem or suggest an improvement: https://github.com/nenadniksic/dark-mode-for-power-platform/issues
-
-Power Apps and Power Automate are trademarks of Microsoft Corporation. This extension is independent and is not affiliated with or endorsed by Microsoft.
-
-Version 1.2.1: renamed to Dark Mode for Power Platform. Includes the Neon style with glowing controls, and fixes for property labels and command-bar buttons in Studio.
+Power Apps and Power Automate are trademarks of Microsoft. This extension is independent and not affiliated with Microsoft.
 ```
 
 **Category**
 Developer Tools
 
 **Single Purpose** (dashboard, Privacy tab)
-Applies a readable dark theme to Microsoft Power Apps canvas Studio, the Power Apps maker portal and Power Automate.
+Applies a readable dark theme to Microsoft Power Apps canvas Studio, the Power Apps maker portal and Power Automate, and optionally to SharePoint, where Power Platform solutions are often built and used.
 
 **Primary Language**
 English
@@ -88,6 +60,8 @@ Use a demo app and demo flows with no customer or employee names in them.
 | `https://*.powerapps.cn/*` | host_permissions | The same theme for Power Apps operated by 21Vianet in China. |
 | `https://*.powerautomate.com/*`, `https://*.powerautomate.us/*`, `https://*.powerautomate.cn/*` | host_permissions | Applies the theme to Power Automate (make.powerautomate.com and its government and China equivalents), including the Flows pages the Power Apps portal embeds from it. |
 | `https://*.flow.microsoft.com/*` | host_permissions | Power Automate's earlier domain, which still serves regional and embedded flow pages. |
+| `scripting` | permissions | Starts the dark theme on SharePoint pages, only after the user has turned SharePoint on and granted access to it. The theme's own packaged scripts are registered for SharePoint while the option is on and removed when it is off. When the option is turned on, they are also applied once to SharePoint tabs that are already open, so those tabs change without a reload. No code is fetched or generated. |
+| `https://*.sharepoint.com/*`, `https://*.sharepoint.us/*`, `https://*.sharepoint-mil.us/*`, `https://*.sharepoint.cn/*` | optional_host_permissions | Requested only when the user turns on the SharePoint option, and removed when they turn it off. Used to apply the same dark theme to SharePoint Online sites (worldwide and GCC, GCC High, DoD, and 21Vianet). Not requested at install. |
 
 **Are you using remote code?** No. All JavaScript ships in the package; the extension only downloads stylesheet text, which it reads, never executes.
 
@@ -140,6 +114,7 @@ https://github.com/nenadniksic/dark-mode-for-power-platform/blob/main/PRIVACY.md
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
+| Unreleased | 2026-11-04 | Opt-in SharePoint support (optional host permissions, `scripting`); border and row-divider fixes. Screenshots: consider one of a SharePoint list. | Not submitted |
 | 1.2.1 | 2026-11-03 | Renamed from Canvas Studio Dark Mode, now that it covers Power Automate and the whole maker portal. | Draft |
 | 1.2.0 | 2026-11-03 | Neon style with glowing controls; property label and command-bar fixes; light insert button over the canvas. | Not submitted |
 | 1.1.0 | 2026-11-03 | Power Automate support; brand-aware accents; Studio sprite icon and colour picker fixes; contrast audit. | Not submitted |
@@ -151,6 +126,7 @@ https://github.com/nenadniksic/dark-mode-for-power-platform/blob/main/PRIVACY.md
 - The extension depends on Studio's page structure. A Studio update can leave a pane or icon uncoloured until the extension is updated.
 - "Developer diagnostics" (options page, off by default) lets a Power Apps or Power Automate maker page's console inspect the pages it embeds and try CSS in them. It exists for debugging this extension, accepts requests only from those maker sites, and does nothing while off. If a reviewer asks: it never runs scripts, only reads styles and applies CSS.
 - A small script runs in the page's own context to notice style changes made by Studio's styling libraries. It only observes them and calls the original functions unchanged.
+- SharePoint is opt-in and uses optional host permissions, so installing or updating the extension asks for no SharePoint access. Power Apps forms embedded in SharePoint lists stay light: they are published apps, which the extension never themes.
 
 ### Rejection History
 None yet.

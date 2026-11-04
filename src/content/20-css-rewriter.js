@@ -68,11 +68,69 @@
     ['text-decoration', 'text-decoration-color', 'fg'],
     ['text-emphasis', 'text-emphasis-color', 'fg'],
     ['-webkit-text-stroke', '-webkit-text-stroke-color', 'fg'],
+    // SharePoint's list rows draw their dividers as a border-image gradient
+    ['border-image', 'border-image-source', 'bd'],
   ];
+  /*
+   * For a border-like shorthand only its colour is the theme's business.
+   * Re-emitting the whole shorthand (as an !important override, later in the
+   * document) also re-asserts its width and style over the page's own later
+   * rules: SharePoint's command-bar buttons are Fluent buttons whose reset
+   * style says `border: var(--strokeWidthThin) solid var(--colorNeutralStroke1)`
+   * and whose atomic classes then set every border width to 0, so the copy
+   * drew a box around each of them.  So these are rewritten into their colour
+   * longhand alone.  `background` is not on this list: a var() there may hold
+   * an image or a gradient, which background-color cannot take.
+   */
+  const COLOR_LONGHAND = {
+    'border': 'border-color', 'border-top': 'border-top-color', 'border-right': 'border-right-color',
+    'border-bottom': 'border-bottom-color', 'border-left': 'border-left-color',
+    'border-block': 'border-block-color', 'border-block-start': 'border-block-start-color', 'border-block-end': 'border-block-end-color',
+    'border-inline': 'border-inline-color', 'border-inline-start': 'border-inline-start-color', 'border-inline-end': 'border-inline-end-color',
+    'outline': 'outline-color', 'column-rule': 'column-rule-color',
+    'text-decoration': 'text-decoration-color', 'text-emphasis': 'text-emphasis-color', '-webkit-text-stroke': '-webkit-text-stroke-color',
+  };
+  const NOT_COLOR_WORD_RE = /^(none|hidden|dotted|dashed|solid|double|groove|ridge|inset|outset|auto|thin|medium|thick|underline|overline|line-through|blink|wavy|filled|open|dot|circle|double-circle|triangle|sesame|from-font|inherit|initial|unset|revert|revert-layer)$/i;
+  const SIZE_VAR_RE = /width|thick|thin|size|style|radius|offset|spacing|weight/i;
   const COLORISH_NAME_RE = /colou?r|background|foreground|border|fill|stroke|shadow|accent|brand|theme|highlight|outline|\bbg\b|\bfg\b|tint|shade|overlay|surface|ink|paper/i;
   const BORDER_SIDES = ['border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'];
   const TRANSPARENT_RE = /^(transparent|rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\))$/i;
   const VAR_RE = /var\(\s*(--[A-Za-z0-9_-]+)\s*(?:,\s*((?:[^()]|\([^()]*\))*))?\)/;
+
+  /** Top-level space-separated tokens of a CSS value (spaces inside parentheses don't split). */
+  function topLevelTokens(value) {
+    const out = [];
+    let depth = 0, cur = '';
+    for (const ch of value) {
+      if (ch === '(') depth++;
+      else if (ch === ')') depth = Math.max(0, depth - 1);
+      if (depth === 0 && /\s/.test(ch)) { if (cur) out.push(cur); cur = ''; continue; }
+      cur += ch;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+
+  /**
+   * The colour token of a border-like shorthand: null when it has none,
+   * undefined when that cannot be told.  A value that is one var() alone is
+   * the latter: the variable may hold the whole border (SharePoint's grid
+   * shell: `border: var(--sp-grid-outer-shell-border, 1px solid ...)`).
+   */
+  function colorToken(value) {
+    const found = [];
+    const tokens = topLevelTokens(value);
+    if (tokens.length === 1 && tokens[0].startsWith('var(')) return undefined;
+    for (const tok of tokens) {
+      if (NOT_COLOR_WORD_RE.test(tok) || /^[-+.\d]/.test(tok) || /^(calc|min|max|clamp)\(/i.test(tok)) continue;
+      if (tok.startsWith('var(')) {
+        const name = (VAR_RE.exec(tok) || [])[1] || '';
+        if (SIZE_VAR_RE.test(name) && !/colou?r/i.test(name)) continue; // --strokeWidthThin
+        found.push(tok);
+      } else if (/^currentcolor$/i.test(tok) || color.containsColor(tok)) found.push(tok);
+    }
+    return found.length === 1 ? found[0] : found.length ? undefined : null;
+  }
 
   function typedName(kind, varName) {
     return `--capd-${kind}-${varName.slice(2)}`;
@@ -150,9 +208,13 @@
       const value = style.getPropertyValue(shorthand);
       if (!value || value.indexOf('var(') === -1) continue;
       const pageImportant = style.getPropertyPriority(shorthand) === 'important';
-      const rewritten = color.rewriteValue(kind, value, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
-      if (rewritten && rewritten !== value) out.push([shorthand, rewritten, true, pageImportant]);
-      else if (pageImportant) out.push([shorthand, value, true, true]);
+      const colorProp = COLOR_LONGHAND[shorthand];
+      const tok = colorProp ? colorToken(value) : undefined;
+      if (tok === null) continue; // no colour in it (`border: var(--w) solid`): nothing to recolour
+      const [prop, text] = tok ? [colorProp, tok] : [shorthand, value]; // ambiguous: the whole shorthand, as before
+      const rewritten = color.rewriteValue(kind, text, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
+      if (rewritten && rewritten !== text) out.push([prop, rewritten, true, pageImportant]);
+      else if (pageImportant) out.push([prop, text, true, true]);
     }
     // The Neon style draws an edge and a halo on bordered controls.  A rule
     // that makes all four borders transparent says this element has none
@@ -299,5 +361,5 @@
     return `@scope (:root) to (${limitSelector}){${css}}`;
   }
 
-  return { PROP_KIND, KINDS, VAR_SHORTHANDS, boostSelector, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
+  return { PROP_KIND, KINDS, VAR_SHORTHANDS, colorToken, boostSelector, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
 });

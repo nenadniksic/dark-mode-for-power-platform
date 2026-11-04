@@ -12,7 +12,7 @@
     <img src="../../icons/icon48.png" width="40" height="40" alt="">
     <div>
       <h1>Dark Mode for Power Platform</h1>
-      <p class="sub">Settings sync with your browser profile. Changes apply instantly to open Studio tabs.</p>
+      <p class="sub">Settings sync with your browser profile. Changes apply instantly to open tabs.</p>
     </div>
   </header>
 
@@ -97,7 +97,12 @@
           <input type="checkbox" id="makerPortal" role="switch" data-key="makerPortal">
           <span class="track" aria-hidden="true"><span class="thumb"></span></span>
         </label>
-        <p class="info">Published apps and the player (apps.powerapps.com) are never touched, and inside Studio the canvas that shows your app is rendered exactly as designed. Each product keeps its own accent colour: purple in Power Apps, blue in Power Automate. Windows High Contrast mode takes precedence over this theme.</p>
+        <label class="row" for="sharePoint">
+          <span class="row-text"><span class="row-title">SharePoint</span><span class="row-hint" id="sharePoint-hint">Also theme SharePoint sites: pages, lists, libraries and site settings, in each site's own theme colour. Chrome asks for access to SharePoint when you turn this on, and the extension gives that access back when you turn it off. OneDrive keeps its own dark mode.</span></span>
+          <input type="checkbox" id="sharePoint" role="switch" aria-describedby="sharePoint-hint">
+          <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        </label>
+        <p class="info">Published apps and the player (apps.powerapps.com) are never touched, and inside Studio the canvas that shows your app is rendered exactly as designed. Each product keeps its own accent colour: purple in Power Apps, blue in Power Automate, and the site's theme colour in SharePoint. Power Apps forms and apps embedded in SharePoint are published apps, so they stay as designed too. Windows High Contrast mode takes precedence over this theme.</p>
       </fieldset>
       <fieldset>
         <legend>Developer</legend>
@@ -113,7 +118,7 @@
 
     <section class="about" aria-labelledby="about-label">
       <h2 id="about-label">About</h2>
-      <p>Version <span id="version">1.2.1</span>. This extension stores only its settings, collects nothing, and makes no network requests other than fetching the pages' own stylesheets.</p>
+      <p>Version <span id="version">1.2.1</span>. This extension stores only its settings, collects nothing, and makes no network requests other than fetching the pages' own stylesheets. It runs only on Power Apps and Power Automate, and on SharePoint only while you allow it.</p>
       <p><button type="button" id="reset" class="secondary">Reset to defaults</button></p>
     </section>
   </main>
