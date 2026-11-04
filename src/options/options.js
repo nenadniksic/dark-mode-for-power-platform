@@ -28,7 +28,14 @@
     });
     for (const r of radios) r.addEventListener('change', async () => { if (r.checked) { await settings.save({ [r.name]: r.value }); flash('Saved'); } });
     settings.onChange(render);
+    const spHint = document.getElementById('sharePoint-hint');
+    const spHintText = spHint.textContent;
+    globalThis.CAPD.sharePoint.bindSwitch(document.getElementById('sharePoint'), (s, granted) => {
+      // On in another browser (settings sync; access is per browser): say why the switch is off here.
+      spHint.textContent = s.sharePoint && !granted ? 'Turned on in another browser. Turn it on here to give this browser access to SharePoint too.' : spHintText;
+    });
     document.getElementById('reset').addEventListener('click', async () => {
+      await globalThis.CAPD.sharePoint.disable(); // SharePoint is off by default: hand the access back too
       await settings.save({ ...settings.DEFAULTS });
       render(await settings.load());
       flash('Settings reset to defaults');

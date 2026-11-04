@@ -33,11 +33,19 @@
   CAPD.CANVAS_OVERLAY_SELECTOR = '[id^="insertAffordance"]';
 
   /**
+   * Multicolour illustrations that read as pictures, not as UI: SharePoint's
+   * file-type folder icons are inline SVG, and darkening their white
+   * highlight drew a dark crease across every folder.  (The other file-type
+   * icons are images, which the theme never touches.)
+   */
+  CAPD.ILLUSTRATION_SELECTOR = '[class*="coloredFolderIcon_"]';
+
+  /**
    * Subtrees the theme must never recolour: the app being designed, Studio's
-   * overlays on it, and colour previews.  Used as the `to (...)` limit of
+   * overlays on it, colour previews and illustrations.  Used as the `to (...)` limit of
    * every @scope block and by the inline processor.
    */
-  CAPD.CANVAS_LIMIT_SELECTOR = '#publishedCanvas, .app-canvas, [data-capd-keep], ' + CAPD.CANVAS_OVERLAY_SELECTOR + ', ' + CAPD.TRUE_COLOR_SELECTOR;
+  CAPD.CANVAS_LIMIT_SELECTOR = '#publishedCanvas, .app-canvas, [data-capd-keep], ' + CAPD.CANVAS_OVERLAY_SELECTOR + ', ' + CAPD.TRUE_COLOR_SELECTOR + ', ' + CAPD.ILLUSTRATION_SELECTOR;
 
   /** Properties whose values are colours, grouped by the role of the colour. */
   CAPD.PROP_KIND = {
@@ -55,6 +63,19 @@
   };
 
   CAPD.isColorProp = (prop) => Object.prototype.hasOwnProperty.call(CAPD.PROP_KIND, prop);
+
+  /**
+   * Creation order of a Fluent v9 FluentProvider, from the id of its style
+   * element: Power Apps numbers them (fui-FluentProvider1, 2, ...), while
+   * SharePoint's come from React's useId (fui-FluentProviderr0, r1 ... r9, ra,
+   * a base-32 counter).  The lowest was created first: the root provider.
+   */
+  CAPD.providerOrder = (id) => {
+    const tail = String(id || '').replace(/^fui-FluentProvider/, '').replace(/[^0-9a-z]/gi, '');
+    if (/^\d+$/.test(tail)) return parseInt(tail, 10);
+    if (/^r[0-9a-v]+$/i.test(tail)) return parseInt(tail.slice(1), 32);
+    return Number.MAX_SAFE_INTEGER;
+  };
 
   /* Minimal logger; only chatty when CAPD.debug is set from the console. */
   CAPD.debug = false;

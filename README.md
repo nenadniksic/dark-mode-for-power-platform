@@ -1,10 +1,11 @@
 # Dark Mode for Power Platform
 
-A carefully crafted dark theme for **Power Apps canvas Studio**, the maker portal and **Power Automate**, delivered as a Chrome / Edge extension (Manifest V3).
+A carefully crafted dark theme for **Power Apps canvas Studio**, the maker portal and **Power Automate**, and if you turn it on, **SharePoint**. It is a Chrome / Edge extension (Manifest V3).
 
 - Every part of Studio's chrome goes dark: command bar, formula bar (Monaco), tree view, Insert / Data / Variables panes, properties pane, dialogs, menus, tooltips, settings, Copilot and comments panes.
 - Power Automate goes dark too: home, My flows, flow details, the new and the classic flow designer, templates, approvals and monitoring, and the Flows pages the Power Apps portal embeds from it.
-- Each product keeps its own accent colour (Power Apps purple, Power Automate blue), read from the page's own Fluent theme. Or switch the Style to **Neon** for a cyberpunk hot-pink look.
+- SharePoint is opt-in: pages, lists, libraries, menus, panels and the classic settings pages go dark in the site's own theme colour. The extension asks for SharePoint access only when you switch it on, and gives the access back when you switch it off.
+- Each product keeps its own accent colour (Power Apps purple, Power Automate blue, a SharePoint site's theme colour), read from the page's own Fluent theme. Or switch the Style to **Neon** for a cyberpunk hot-pink look.
 - **Your app is never recoloured.** The canvas that renders the app you are designing is excluded from every rule, so what you see is what your users get. Colour previews (swatches, the colour picker) are excluded the same way, so they show the colour you are choosing.
 - Accessible by design: every text/surface pairing the theme produces is checked against WCAG 2.1 AA (AAA in the high-contrast setting), focus rings are preserved, Windows High Contrast mode is respected, and the extension never changes the DOM structure or ARIA of the page.
 - Zero telemetry, no accounts, no network requests other than fetching Studio's own stylesheets.
@@ -27,7 +28,7 @@ For Power Platform work, a dedicated theme does things a general one cannot, and
 - **Colour pickers show real colours.** A general tool recolours swatches and gradients like any other element, so the colour you pick is not the colour you see. Here, swatches and the colour picker are left exactly as they are.
 - **Built for Studio's structure.** It recolours Studio's own colour settings with Microsoft's own dark mapping, and handles Studio's special cases: sprite icons, the forced styles behind property labels, and the command-bar colours.
 - **Tested readability.** Every colour pairing the theme produces is checked for WCAG contrast in the test suite, and a built-in audit checks real pages. General tools make no such guarantee.
-- **Narrow access.** It runs only on Power Platform sites. A general dark mode usually asks to read and change data on every site you visit.
+- **Narrow access.** It runs only on Power Platform sites, and on SharePoint only while you allow it. A general dark mode usually asks to read and change data on every site you visit.
 
 What general tools do better:
 
@@ -61,6 +62,7 @@ Open the toolbar popup or the full options page (`All settings`).
 | Adapt two-tone icons | Lightens dark neutral strokes in Studio's control icons; coloured parts are never changed. |
 | Developer diagnostics | Off by default. Lets the console of a maker page inspect the pages it embeds (Studio, the Flows pages) and try CSS in them. Only for debugging this extension. |
 | Portal pages and Power Automate | Also theme the make.powerapps.com pages (Home, Apps, Tables, Flows…) and Power Automate, including the flow designer. Studio is always themed. |
+| SharePoint | Off by default. Also theme SharePoint sites. Turning it on asks Chrome for access to SharePoint (`*.sharepoint.com` and the government and China clouds); turning it off removes that access. Settings sync between browsers but access does not, so each browser asks once. OneDrive is not themed: it has its own dark mode. |
 
 Settings sync with your browser profile and apply instantly to open tabs.
 
@@ -97,7 +99,7 @@ addEventListener('message', (e) => e.data?.type === 'capd:audit-result' && conso
 document.querySelector('iframe[name="EmbeddedStudio"]').contentWindow.postMessage({ type: 'capd:audit' }, '*');
 ```
 
-Frames answer only their direct parent, and only on a Power Apps or Power Automate maker origin.
+Frames answer only their direct parent, and only on a Power Apps or Power Automate maker origin (on SharePoint, a SharePoint origin).
 
 With **Developer diagnostics** switched on in the options, the same bridge also answers `{ type: 'capd:inspect', x, y }` (or `selector`) with the elements there and the colour rules that apply to them, `{ type: 'capd:probe-css', css }` by installing test CSS in the frame (an empty string removes it), and `{ type: 'capd:override', settings: { look: 'neon' } }` by previewing settings in that page until it reloads.
 
@@ -106,7 +108,8 @@ With **Developer diagnostics** switched on in the options, the same bridge also 
 - Chrome and Edge 120+ (uses CSS `@scope`, MV3 `world: "MAIN"` content scripts).
 - make.powerapps.com, including preview/test, GCC (`make.gov.powerapps.us`), GCC High, DoD and 21Vianet hosts, and the regional Studio authoring frames.
 - make.powerautomate.com, including its GCC, GCC High and 21Vianet hosts, and the Power Automate pages embedded in the Power Apps portal.
-- Published apps and the player are deliberately out of scope and never touched.
+- SharePoint Online (opt-in): `*.sharepoint.com` (worldwide and GCC), `*.sharepoint.us` (GCC High), `*.sharepoint-mil.us` (DoD) and `*.sharepoint.cn` (21Vianet). Modern and classic pages; SharePoint frames are themed only inside a SharePoint page, not where Teams or another site embeds them. OneDrive (`*-my.sharepoint.com`) is left alone.
+- Published apps and the player are deliberately out of scope and never touched, including Power Apps forms and apps embedded in SharePoint.
 
 ## Licence
 

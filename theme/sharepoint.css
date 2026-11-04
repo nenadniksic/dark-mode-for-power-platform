@@ -1,0 +1,7 @@
+/* ==========================================================================
+   SharePoint (opt-in).  Modern SharePoint is Fluent UI v8 (themed through
+   load-themed-styles) with Fluent v9 providers around the page chrome; the
+   generated overrides and the Fluent tokens do most of the work, in the
+   site's own theme colour.  These rules cover what a mapping cannot.
+   ========================================================================== */
+html[data-capd="dark"] body { background-color: var(--capd-s0) !important; }

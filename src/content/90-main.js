@@ -2,7 +2,7 @@
  * Dark Mode for Power Platform — content-script entry point.
  *
  * Decides whether this frame is part of the Power Apps maker experience,
- * applies a flash-free fallback from a cached state, loads settings and
+ * Power Automate, or (when the user opted in) SharePoint, applies a flash-free fallback from a cached state, loads settings and
  * runs the theme engine: static layers + CSSOM rewriting + inline colours +
  * mutation tracking, for the document and any open shadow roots.
  */
@@ -31,6 +31,19 @@
     // Power Apps portal embeds from it (an iframe named widgetIFrame).
     const automateHost = /^make(\.preview|\.test)?\.powerautomate\.(com|cn)$/.test(host) || /^make\.(gov|high)\.powerautomate\.us$/.test(host) || /(^|\.)flow\.microsoft\.com$/.test(host);
     if (automateHost) return isTop ? 'automate' : 'automate-frame';
+    // SharePoint (opt-in; the service worker registers these scripts there
+    // only while the setting is on).  A SharePoint frame is themed only
+    // inside a SharePoint page, not where Teams or another site embeds it.
+    // OneDrive has a dark mode of its own and is left alone.
+    if (/(^|\.)sharepoint(-mil)?\.(com|us|cn)$/.test(host)) {
+      if (!CAPD.sharePoint || !CAPD.sharePoint.isHost(host)) return 'none';
+      if (isTop) return 'sharepoint';
+      try {
+        const ao = loc.ancestorOrigins;
+        if (ao && ao.length && CAPD.sharePoint.isHost(new URL(ao[ao.length - 1]).hostname)) return 'sharepoint-frame';
+      } catch (e) { /* ignore */ }
+      return 'none';
+    }
     if (host === 'apps.powerapps.com' || /^apps\./.test(host) || /\/play\//.test(path) || /webplayer|iframeapp|\/player\//i.test(path)) return 'player';
     if (/^authoring\./.test(host) || /\.gateway\.prod\.island\.powerapps\./.test(host) || window.name === 'EmbeddedStudio' || window.name === 'preloadStudio' || /\/embed\/?$/.test(path)) return 'studio';
     try {
@@ -44,6 +57,8 @@
   CAPD.role = role;
   /** Roles the "Maker portal pages" setting switches off (Studio is always themed). */
   const PORTAL_ROLES = new Set(['maker', 'maker-frame', 'automate', 'automate-frame']);
+  /** Roles the "SharePoint" setting switches on. */
+  const SHAREPOINT_ROLES = new Set(['sharepoint', 'sharepoint-frame']);
   if (role === 'none' || role === 'player') return;
 
   /* ---------------------------------------------------------------- */
@@ -88,7 +103,7 @@
       this.opts = null;
       this.onAdopted = () => { for (const t of this.trees.values()) t.sm.scan(); };
       this.onBrand = (value, id) => this.adoptBrand(value, id);
-      this.brandFrom = 0;
+      this.brandFrom = null;
       this.onShadow = (e) => { const r = e.target && e.target.shadowRoot; if (r) this.manage(r); };
     }
 
@@ -115,15 +130,16 @@
     }
 
     /**
-     * A FluentProvider declared its brand.  The root provider (the lowest
-     * number, fui-FluentProvider1) decides; nested providers for callouts or
-     * Copilot panes do not repaint the whole page.
+     * A FluentProvider declared its brand.  The root provider (the first one
+     * created) decides; nested providers for callouts or Copilot panes do not
+     * repaint the whole page.  A grey "brand" is not an accent: SharePoint
+     * wraps some panels in a de-themed provider whose brand is #292929.
      */
     adoptBrand(value, id) {
-      const n = parseInt(String(id).replace(/^\D+/, ''), 10) || 1;
-      if (this.brandFrom && this.brandFrom < n) return;
+      const n = CAPD.providerOrder(id);
+      if (this.brandFrom !== null && this.brandFrom < n) return;
       const c = CAPD.color.parse(value);
-      if (!c) return;
+      if (!c || CAPD.color.toHsl(c).s < 0.15) return;
       this.brandFrom = n;
       const seed = CAPD.color.toHex(c);
       if (seed === CAPD.brandSeed) return;
@@ -207,6 +223,7 @@
     if (mqForced.matches) return false;                       // Windows High Contrast owns the colours
     if (s.mode === 'system' && !mqDark.matches) return false;
     if (PORTAL_ROLES.has(role) && !s.makerPortal) return false;
+    if (SHAREPOINT_ROLES.has(role) && !s.sharePoint) return false;
     return true;
   }
 
@@ -251,9 +268,14 @@
    *   postMessage({ type: 'capd:audit' }, location.origin)   // this page
    * and receives { type: 'capd:audit-result', role, frame, result }.  Only
    * the direct parent or the page itself is answered, only on a Power Apps
-   * or Power Automate maker origin, and only with style diagnostics.
+   * or Power Automate maker origin (or a SharePoint one, on SharePoint), and
+   * only with style diagnostics.
    */
   const MAKER_ORIGIN_RE = /^https:\/\/make(\.preview|\.test)?\.(powerapps|powerautomate)\.(com|cn)$|^https:\/\/make\.(gov|high)\.(powerapps|powerautomate)\.us$|^https:\/\/make\.apps\.appsplatform\.us$/;
+  const bridgeOrigin = (origin) => {
+    if (MAKER_ORIGIN_RE.test(origin)) return true;
+    try { return SHAREPOINT_ROLES.has(role) && /^https:$/.test(new URL(origin).protocol) && CAPD.sharePoint.isHost(new URL(origin).hostname); } catch (e) { return false; }
+  };
   /*
    * With "Developer diagnostics" switched on in the options page (off by
    * default), the same bridge also answers
@@ -276,7 +298,7 @@
   window.addEventListener('message', (e) => {
     const d = e.data;
     if (!d || typeof d !== 'object' || !Object.prototype.hasOwnProperty.call(BRIDGE_TYPES, d.type)) return;
-    if (!MAKER_ORIGIN_RE.test(e.origin)) return;
+    if (!bridgeOrigin(e.origin)) return;
     const fromParent = window.parent !== window && e.source === window.parent;
     const fromSelf = e.source === window && e.origin === location.origin;
     if (!fromParent && !fromSelf) return;

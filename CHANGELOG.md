@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### Added
+- SharePoint, as an opt-in (Where > SharePoint in the options page, or the SharePoint switch in the popup). Pages, lists, document libraries, menus, panels and the classic settings pages go dark in each site's own theme colour, in either style. Turning it on asks Chrome for access to SharePoint sites; turning it off gives that access back, so the extension holds none while SharePoint is off. Open SharePoint tabs change at once. OneDrive is left alone (it has a dark mode of its own), as are Power Apps forms and apps embedded in SharePoint, which are published apps.
+
 ### Fixed
+- Buttons the page draws without a border could get a 1px box (SharePoint's command bars: New, Page details, Share, Edit). A Fluent reset style declares `border: var(--strokeWidthThin) solid <colour>` and atomic classes then set the widths to 0; the theme re-asserted the whole shorthand, width included. A border, outline or text-decoration shorthand is now recoloured through its colour alone.
+- Row dividers drawn as a `border-image` gradient with `var()` colours kept their light colour (SharePoint's list and library rows showed bright white lines).
+- When a page has several Fluent v9 theme providers, the accent now comes from the first one created, and a grey "brand" (SharePoint's de-themed panels) is never taken for the accent.
 - Studio's Settings dialog in the Neon style: General / Display / Updates / Support each sat in a pink box. They are Fluent buttons acting as tabs, and the glow meant for bordered controls caught them. Tabs no longer glow; the selected page gets a pink edge instead.
 - Disabled switches showed no state in either style (Settings > Updates when the app is read-only or shared): the thumb became as dark as the pill. A disabled switch is now an outline when off and filled when on.
 - In the Neon style, buttons the page draws without a border got a pink box anyway: the solution explorer's sidebar (Overview / Objects / History / Pipelines / Source control) and its ≡ toggle, among others. They are Fluent default buttons with a transparent border, and the glow for bordered buttons forced an edge onto them. The theme now notices a transparent border and leaves those buttons alone; bordered ones still glow.
