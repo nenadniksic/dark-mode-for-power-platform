@@ -12,7 +12,11 @@
 
   const DEFAULTS = Object.freeze({
     enabled: true,
-    mode: 'dark',          // 'dark' | 'system'
+    mode: 'dark',          // 'dark' | 'system' | 'sun' (sunset to sunrise) | 'custom' (darkFrom to darkTo); see schedule.js
+    darkFrom: '19:00',     // custom hours by this computer's clock, 'HH:MM' (24 h); kept while another mode is chosen
+    darkTo: '07:00',
+    latitude: null,        // sunset to sunrise: the user's own location in degrees, or null for the time zone's city
+    longitude: null,
     surface: 'dark',       // 'dim' | 'dark' | 'black'
     look: 'classic',       // 'classic' | 'neon' (cyberpunk: violet-black, hot pink, cyan focus)
     contrast: 'standard',  // 'standard' | 'high'
@@ -31,7 +35,12 @@
 
   function normalize(raw) {
     const s = { ...DEFAULTS, ...(raw && typeof raw === 'object' ? raw : {}) };
-    if (!['dark', 'system'].includes(s.mode)) s.mode = DEFAULTS.mode;
+    if (!['dark', 'system', 'sun', 'custom'].includes(s.mode)) s.mode = DEFAULTS.mode;
+    for (const k of ['darkFrom', 'darkTo']) if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(s[k])) s[k] = DEFAULTS[k];
+    // Coordinates: both or neither, rounded to two decimals (about 1 km, plenty for sunset times).
+    const coord = (v, max) => ((typeof v === 'number' || (typeof v === 'string' && v.trim() !== '')) && Number.isFinite(+v) && Math.abs(+v) <= max ? Math.round(+v * 100) / 100 : null);
+    s.latitude = coord(s.latitude, 90); s.longitude = coord(s.longitude, 180);
+    if (s.latitude === null || s.longitude === null) { s.latitude = null; s.longitude = null; }
     if (!['dim', 'dark', 'black'].includes(s.surface)) s.surface = DEFAULTS.surface;
     if (!['classic', 'neon'].includes(s.look)) s.look = DEFAULTS.look;
     if (!['standard', 'high'].includes(s.contrast)) s.contrast = DEFAULTS.contrast;

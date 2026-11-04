@@ -22,7 +22,49 @@
     return { kind: 'none', text: 'Not a Power Apps or Power Automate page' };
   }
 
+  /* ---- Appearance: what "Follow system" or a schedule says right now ---- */
+  const schedule = globalThis.CAPD.schedule;
+  const mqDark = matchMedia('(prefers-color-scheme: dark)');
+  const darkFrom = $('#darkFrom');
+  const darkTo = $('#darkTo');
+  let shown = null; // the last [settings, tabInfo] rendered, to keep the schedule line current
+
+  /** null for Always dark; otherwise { dark, text, until, st }. */
+  function modeState(s) {
+    if (s.mode === 'system') return { dark: mqDark.matches, text: 'Light while your system is light', until: null, st: null };
+    const st = schedule.state(s);
+    return st ? { dark: st.dark, text: schedule.summary(st), until: st.until ? st.until.at : null, st } : null;
+  }
+
+  /** Leave a field alone while the user is in it. */
+  function setValue(input, value) { if (document.activeElement !== input) input.value = value; }
+
+  function renderSchedule(s, mode) {
+    const box = $('#schedule');
+    box.hidden = !schedule.isScheduled(s);
+    if (box.hidden) return;
+    const st = mode.st;
+    $('#hours').hidden = !(s.mode === 'custom' || st.fallback);
+    setValue(darkFrom, s.darkFrom);
+    setValue(darkTo, s.darkTo);
+    let note = `${schedule.summary(st)}.`;
+    if (s.mode === 'sun' && st.location) {
+      const span = schedule.darkSpan(st);
+      const loc = st.location;
+      note = `${span ? `Dark ${span}.` : note} Sunset and sunrise for ${loc.source === 'manual' ? schedule.placeText(loc) : `${loc.place}, from your time zone`}.`;
+    } else if (s.mode === 'sun') {
+      note = `${note} Your time zone gives no location, so these hours apply until you set one.`;
+    }
+    $('#schedule-note').textContent = note;
+    const locButton = $('#location');
+    locButton.hidden = s.mode !== 'sun';
+    locButton.textContent = st.location ? 'Change location' : 'Set location';
+  }
+
   function render(s, tabInfo) {
+    shown = [s, tabInfo];
+    const mode = modeState(s);
+    if (mode && mode.dark && mode.until) tabInfo = { ...tabInfo, text: `${tabInfo.text} until ${schedule.clock(mode.until)}` };
     enabled.checked = s.enabled;
     for (const r of radios) r.checked = s[r.name] === r.value;
     for (const t of toggles) {
@@ -31,9 +73,11 @@
     }
     const on = s.enabled && tabInfo.kind !== 'none' && tabInfo.kind !== 'player';
     if (!s.enabled) { status.textContent = 'Dark mode is off'; status.className = 'status'; }
+    else if (on && mode && !mode.dark) { status.textContent = mode.text; status.className = 'status'; }
     else if (tabInfo.kind === 'maker' && !s.makerPortal) { status.textContent = 'Off for portal pages (see below)'; status.className = 'status'; }
     else { status.textContent = tabInfo.text; status.className = on ? 'status on' : 'status'; }
     document.body.classList.toggle('disabled', !s.enabled);
+    renderSchedule(s, mode);
   }
 
   async function currentTabInfo() {
@@ -48,6 +92,10 @@
     render(s, tabInfo);
     enabled.addEventListener('change', () => settings.save({ enabled: enabled.checked }));
     for (const r of radios) r.addEventListener('change', () => { if (r.checked) settings.save({ [r.name]: r.value }); });
+    for (const t of [darkFrom, darkTo]) t.addEventListener('change', () => { if (schedule.minutes(t.value) >= 0) settings.save({ [t.id]: t.value }); });
+    $('#location').addEventListener('click', () => chrome.runtime.openOptionsPage());
+    mqDark.addEventListener('change', () => { if (shown) render(...shown); });
+    setInterval(() => { if (shown) render(...shown); }, 30000);
     for (const t of toggles) t.addEventListener('change', () => {
       const key = t.dataset.key;
       settings.save({ [key]: t.dataset.on ? (t.checked ? t.dataset.on : t.dataset.off) : t.checked });

@@ -3,6 +3,7 @@
 Dark Mode for Power Platform runs entirely inside your browser.
 
 - It stores only its own settings (theme preferences). They are kept with your Chrome profile and, if Chrome Sync is on, Chrome carries them to your other devices.
+- The *Sunset to sunrise* schedule never asks for or reads your device's location. It works the times out on your computer from the city your time zone is named after, or from coordinates you type in yourself; those are stored with your other settings and go nowhere else.
 - It does not collect, transmit or sell any data. There is no telemetry, no analytics and no remote configuration.
 - The only network requests it makes are fetches of Power Apps' and Power Automate's own stylesheet files when the browser does not expose their rules to the page (same resources the page already loads), restricted to Microsoft Power Platform hosts.
 - It changes only how pages look: it reads and rewrites their colours and styles. It never collects or sends the content of your apps, flows, formulas or data.

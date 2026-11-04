@@ -53,7 +53,7 @@ Open the toolbar popup or the full options page (`All settings`).
 | Setting | What it does |
 | --- | --- |
 | Dark mode | Master switch (also **Alt+Shift+D**, configurable at `chrome://extensions/shortcuts`). |
-| Appearance | *Always dark*, or *Follow system* (dark only while your OS colour scheme is dark). |
+| Appearance | *Always dark*; *Follow system* (dark only while your OS colour scheme is dark); *Sunset to sunrise*; or *Custom hours* (dark between two times you pick, overnight or within the day). Each choice keeps its own hours and location while you try another, and the master switch leaves the choice alone. |
 | Surface | *Dim*, *Dark* (Fluent UI's dark theme greys) or *Black* for OLED-style surfaces. |
 | Style | *Classic* keeps each product's own colours. *Neon* is a cyberpunk take: violet-black surfaces, hot-pink accents everywhere and cyan focus rings. |
 | High contrast text | Brighter text and stronger borders targeting WCAG AAA. Turns on automatically when the OS asks for more contrast. |
@@ -63,6 +63,8 @@ Open the toolbar popup or the full options page (`All settings`).
 | Portal pages and Power Automate | Also theme the make.powerapps.com pages (Home, Apps, Tables, Flows…) and Power Automate, including the flow designer. Studio is always themed. |
 
 Settings sync with your browser profile and apply instantly to open tabs.
+
+**Scheduled appearances.** *Sunset to sunrise* works the times out on your computer, with no location permission and no network. By default it uses the city your computer's time zone is named after (from the tz database: *Belgrade* for `Europe/Belgrade`), which is close enough for most places; enter your own latitude and longitude in the options for exact times. Where the time zone names no city (a `UTC` clock), it uses the custom hours until you set a location. Inside the polar circles it stays dark through the polar night and light through the midnight sun. Both schedules follow this computer's clock, daylight-saving changes included. Visible tabs switch at the scheduled minute. After the computer wakes from sleep they catch up within a minute, and a hidden tab catches up as soon as you return to it.
 
 ## How it works
 

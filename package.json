@@ -10,6 +10,7 @@
     "test": "node --test test/*.test.mjs",
     "icons": "node tools/build-icons.mjs",
     "tokens": "node tools/gen-tokens.mjs",
+    "timezones": "node tools/gen-timezones.mjs",
     "contrast": "node tools/contrast-check.mjs",
     "package": "node tools/build.mjs && node tools/package.mjs",
     "standalone": "node tools/build.mjs --standalone"

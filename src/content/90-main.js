@@ -73,7 +73,8 @@
   }
 
   const cached = readCache();
-  if (cached && cached.active && cached.attrs) { setHtmlAttrs(cached.attrs); setFallback(true); }
+  // `until`: a schedule's next switch; past it, the cached "on" is stale.
+  if (cached && cached.active && cached.attrs && !(cached.until && Date.now() >= cached.until)) { setHtmlAttrs(cached.attrs); setFallback(true); }
   // The page's brand colour from the last visit, so the first paint already
   // uses it (Power Automate is blue, not Power Apps purple).
   if (cached && typeof cached.brand === 'string') CAPD.brandSeed = cached.brand;
@@ -206,6 +207,7 @@
     if (!s.enabled) return false;
     if (mqForced.matches) return false;                       // Windows High Contrast owns the colours
     if (s.mode === 'system' && !mqDark.matches) return false;
+    if (CAPD.schedule && !CAPD.schedule.isDark(s)) return false;      // sunset to sunrise, custom hours
     if (PORTAL_ROLES.has(role) && !s.makerPortal) return false;
     return true;
   }
@@ -215,7 +217,8 @@
     lastSettings = settings;
     const s = effective(settings);
     const on = shouldRun(s);
-    if (!devOverride) writeCache({ ...(readCache() || {}), active: on, attrs: CAPD.staticTheme.htmlAttrs(s), at: Date.now() });
+    const until = scheduleUntil(s);
+    if (!devOverride) writeCache({ ...(readCache() || {}), active: on, attrs: CAPD.staticTheme.htmlAttrs(s), at: Date.now(), until });
     if (on) {
       if (!engine) engine = new Engine();
       engine.update(s);
@@ -226,7 +229,38 @@
       clearHtmlAttrs();
     }
     CAPD.active = on;
+    armSchedule(s, until);
   }
+
+  /*
+   * Scheduled modes switch at sunset and sunrise, or at the chosen hours.
+   * Timers in hidden tabs are throttled, and a timer's clock stops while the
+   * computer sleeps (a tab left visible sees no visibility change on wake),
+   * so look again at least once a minute and whenever the tab is shown.  A
+   * look that changes nothing is a few arithmetic operations: the theme is
+   * rebuilt only when it should go on or off.
+   */
+  const RECHECK_MAX = 60 * 1000;
+  let scheduleTimer = 0;
+  function scheduleUntil(s) {
+    if (!s.enabled || !CAPD.schedule || !CAPD.schedule.isScheduled(s)) return null;
+    const st = CAPD.schedule.state(s);
+    return st && st.until ? st.until.at : null;
+  }
+  function armSchedule(s, until) {
+    clearTimeout(scheduleTimer);
+    scheduleTimer = 0;
+    if (!s.enabled || !CAPD.schedule || !CAPD.schedule.isScheduled(s)) return;
+    const wait = until ? Math.max(until - Date.now(), 0) + 1000 : RECHECK_MAX;
+    scheduleTimer = setTimeout(recheckSchedule, Math.min(wait, RECHECK_MAX));
+  }
+  function recheckSchedule() {
+    if (!lastSettings) return;
+    const s = effective(lastSettings);
+    if (shouldRun(s) !== CAPD.active) apply(lastSettings);
+    else armSchedule(s, scheduleUntil(s));
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') recheckSchedule(); });
 
   function reload() { CAPD.settings.load().then(apply).catch((e) => CAPD.warn('settings', e)); }
   reload();
@@ -235,6 +269,7 @@
 
   /** Full removal (used by the test harness and when the extension is unloaded). */
   CAPD.teardown = () => {
+    clearTimeout(scheduleTimer);
     if (engine) { engine.stop(); engine = null; }
     setFallback(false);
     clearHtmlAttrs();

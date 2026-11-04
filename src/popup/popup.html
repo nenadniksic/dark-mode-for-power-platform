@@ -23,9 +23,21 @@
 
     <section class="group" aria-labelledby="appearance-label">
       <h2 id="appearance-label" class="group-title">Appearance</h2>
-      <div class="segmented" role="radiogroup" aria-labelledby="appearance-label" data-key="mode">
+      <div class="segmented grid" role="radiogroup" aria-labelledby="appearance-label" data-key="mode">
         <label><input type="radio" name="mode" value="dark"><span>Always dark</span></label>
         <label><input type="radio" name="mode" value="system"><span>Follow system</span></label>
+        <label><input type="radio" name="mode" value="sun"><span>Sunset to sunrise</span></label>
+        <label><input type="radio" name="mode" value="custom"><span>Custom hours</span></label>
+      </div>
+      <div class="schedule" id="schedule" hidden>
+        <div class="hours" id="hours" hidden>
+          <label for="darkFrom">Dark from</label>
+          <input type="time" id="darkFrom" required>
+          <label for="darkTo">to</label>
+          <input type="time" id="darkTo" required>
+        </div>
+        <p class="schedule-note" id="schedule-note"></p>
+        <button type="button" id="location" class="link-button small" hidden>Change location</button>
       </div>
     </section>
 
@@ -72,6 +84,8 @@
     </footer>
   </main>
   <script src="../shared/settings.js"></script>
+  <script src="../shared/timezones.js"></script>
+  <script src="../shared/schedule.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

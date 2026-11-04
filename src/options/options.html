@@ -25,13 +25,35 @@
           <input type="checkbox" id="enabled" role="switch" data-key="enabled">
           <span class="track" aria-hidden="true"><span class="thumb"></span></span>
         </label>
-        <div class="row" role="radiogroup" aria-labelledby="mode-label">
-          <span class="row-text"><span class="row-title" id="mode-label">Appearance</span><span class="row-hint">“Follow system” turns dark mode on only while your OS uses a dark colour scheme.</span></span>
+        <div class="row wrap" role="radiogroup" aria-labelledby="mode-label">
+          <span class="row-text"><span class="row-title" id="mode-label">Appearance</span><span class="row-hint">“Follow system” turns dark mode on only while your OS uses a dark colour scheme. “Sunset to sunrise” and “Custom hours” switch it on and off by the clock. Each choice keeps its own hours and location while you try another.</span></span>
           <span class="segmented" data-key="mode">
             <label><input type="radio" name="mode" value="dark"><span>Always dark</span></label>
             <label><input type="radio" name="mode" value="system"><span>Follow system</span></label>
+            <label><input type="radio" name="mode" value="sun"><span>Sunset to sunrise</span></label>
+            <label><input type="radio" name="mode" value="custom"><span>Custom hours</span></label>
           </span>
         </div>
+        <div class="row sub-row" id="hours-row" hidden>
+          <span class="row-text"><span class="row-title">Dark hours</span><span class="row-hint" id="hours-hint">Dark mode turns on at the first time and off at the second, by this computer’s clock. Overnight hours are fine.</span></span>
+          <span class="fields">
+            <label for="darkFrom">From</label>
+            <input type="time" id="darkFrom" required aria-describedby="hours-hint">
+            <label for="darkTo">to</label>
+            <input type="time" id="darkTo" required aria-describedby="hours-hint">
+          </span>
+        </div>
+        <div class="row sub-row wrap" id="location-row" hidden>
+          <span class="row-text"><span class="row-title">Location for sunset and sunrise</span><span class="row-hint" id="location-hint"></span></span>
+          <span class="fields">
+            <label for="latitude">Latitude</label>
+            <input type="number" id="latitude" min="-90" max="90" step="any" inputmode="decimal" placeholder="44.8" aria-describedby="location-hint">
+            <label for="longitude">Longitude</label>
+            <input type="number" id="longitude" min="-180" max="180" step="any" inputmode="decimal" placeholder="20.5" aria-describedby="location-hint">
+            <button type="button" id="useTimeZone" class="secondary">Use time zone</button>
+          </span>
+        </div>
+        <p class="info" id="schedule-note" aria-live="polite" hidden></p>
       </fieldset>
 
       <fieldset>
@@ -96,6 +118,8 @@
     </section>
   </main>
   <script src="../shared/settings.js"></script>
+  <script src="../shared/timezones.js"></script>
+  <script src="../shared/schedule.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

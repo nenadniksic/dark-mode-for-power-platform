@@ -109,6 +109,8 @@ Use a demo app and demo flows with no customer or employee names in them.
 | User activity | No | No | | No |
 | Website content | No | No | | No |
 
+Location stays "No": the sunset-to-sunrise schedule never reads the device location (there is no geolocation permission). It uses the time zone's city, or coordinates the user types in, stored with the other settings and never transmitted by the extension.
+
 Notes for the form: the only stored data is the user's own theme preferences, which Chrome Sync carries between the user's devices. That is disclosed in the privacy policy. The diagnostic contrast check reads page text locally only when the user runs it, and returns the result to the same page; nothing is transmitted.
 
 ### Data Use Certification

@@ -55,6 +55,17 @@ h2 { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: 
 .segmented input:checked + span { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); }
 .segmented input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 1px; }
 .segmented input:hover:not(:checked) + span { color: var(--text); }
+.segmented.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+
+/* schedule details under Appearance */
+.schedule { margin-top: 8px; padding: 0 2px; }
+.hours { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.schedule[hidden], .hours[hidden], .link-button[hidden] { display: none; }
+.hours label { color: var(--text-2); }
+.hours input { font: inherit; color: var(--text); background: var(--bg-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
+.hours input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.schedule-note { margin: 0; color: var(--text-2); font-size: 12px; }
+.link-button.small { font-size: 12px; padding: 2px 0; }
 
 /* switches */
 .switch { position: relative; display: inline-flex; align-items: center; flex: none; }

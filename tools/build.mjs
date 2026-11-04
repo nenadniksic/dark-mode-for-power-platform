@@ -60,6 +60,8 @@ if (process.argv.includes('--standalone')) {
   const order = [
     'src/main-world/cssom-hooks.js',
     'src/shared/settings.js',
+    'src/shared/timezones.js',
+    'src/shared/schedule.js',
     'src/content/00-namespace.js',
     'src/content/generated/fluent-tokens.js',
     'src/content/generated/theme-css.js',

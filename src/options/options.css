@@ -31,6 +31,19 @@ kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; bo
 .saved { min-height: 20px; color: var(--text-2); margin: 10px 4px; }
 .about { margin-top: 24px; color: var(--text-2); font-size: 13px; }
 
+/* Appearance: four choices and the schedule rows under them */
+.row.wrap { flex-wrap: wrap; }
+.row.wrap > .row-text { flex: 1 1 260px; }
+.row.sub-row { border-top-style: dashed; }
+.row[hidden], .info[hidden] { display: none; }
+.fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fields label { color: var(--text-2); }
+.fields input { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+.fields input[type="number"] { width: 7.5em; }
+.fields input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.fields input[aria-invalid="true"] { border-color: #d13438; }
+@media (prefers-color-scheme: dark) { .fields input[aria-invalid="true"] { border-color: #f1707b; } }
+
 .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 3px; background: var(--bg); flex: none; }
 .segmented label { position: relative; }
 .segmented input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }

@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+### Added
+- Scheduled dark mode. Appearance now offers *Sunset to sunrise* and *Custom hours* beside *Always dark* and *Follow system*, in the popup and the options page. Sunset and sunrise are worked out on your computer, for the city your time zone is named after or for coordinates you enter in the options; the extension asks for no location permission and goes online for nothing. Custom hours can run overnight (19:00 to 07:00) or within the day. Visible tabs switch at the scheduled minute; after sleep they catch up within a minute, and a hidden tab as soon as you return to it. The popup says what comes next ("Light until sunset at 16:24").
+- Each appearance keeps its own hours and location while you try another, and turning dark mode off and on (the switch or Alt+Shift+D) keeps the appearance you chose. The schedule only decides whether the theme is on right now; it never changes your settings.
+
 ### Fixed
+- "Follow system" no longer says the theme is active in the popup while your system is light.
 - Studio's Settings dialog in the Neon style: General / Display / Updates / Support each sat in a pink box. They are Fluent buttons acting as tabs, and the glow meant for bordered controls caught them. Tabs no longer glow; the selected page gets a pink edge instead.
 - Disabled switches showed no state in either style (Settings > Updates when the app is read-only or shared): the thumb became as dark as the pill. A disabled switch is now an outline when off and filled when on.
 - In the Neon style, buttons the page draws without a border got a pink box anyway: the solution explorer's sidebar (Overview / Objects / History / Pipelines / Source control) and its ≡ toggle, among others. They are Fluent default buttons with a transparent border, and the glow for bordered buttons forced an edge onto them. The theme now notices a transparent border and leaves those buttons alone; bordered ones still glow.
