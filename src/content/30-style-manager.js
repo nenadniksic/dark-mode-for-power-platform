@@ -13,6 +13,17 @@
   const rewriter = CAPD.rewriter;
 
   const FETCH_TIMEOUT_MS = 15000;
+  /*
+   * Page styles are rewritten as soon as they appear, before the browser
+   * paints them: in the MutationObserver callback (a microtask after the
+   * page's own script) or else in the next animation frame (also before its
+   * paint).  A trailing timer used to wait 60-400 ms instead, so a page that
+   * keeps adding styles while it builds (SharePoint adds 300 in two seconds)
+   * painted light and turned dark in waves.  The budget caps the work done
+   * before any one paint, so a huge burst cannot freeze the page.
+   */
+  const FRAME_BUDGET_MS = 40;
+  const nextFrame = typeof requestAnimationFrame === 'function' ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
   const sheetText = new Map(); // url -> Promise<string|null>
 
   /** Fetch cross-origin stylesheet text, first directly (CORS), then via the service worker. */
@@ -54,10 +65,11 @@
       this.inlineEl = null;
       this.overrides = new Map();   // CSSStyleSheet -> { el, signature }
       this.pending = new Set();     // sheets scheduled for (re)processing
-      this.flushTimer = 0;
-      this.pendingSince = 0;
+      this.frameArmed = false;
+      this.spent = 0;               // ms of rewriting since the last frame
+      this.recheck = false;         // look again next frame: see armFrame()
       this.disposed = false;
-      this.stats = { sheets: 0, rules: 0, foreign: 0, ms: 0 };
+      this.stats = { sheets: 0, appends: 0, rules: 0, foreign: 0, ms: 0, frames: 0 };
     }
 
     makeStyle(kind) {
@@ -114,9 +126,15 @@
       return !!(node && node.getAttribute && node.getAttribute(CAPD.STYLE_ATTR));
     }
 
-    /** Schedule every page sheet (new or changed) for processing. */
+    /** Rewrite every page sheet that is new or changed. */
     scan() {
       if (this.disposed) return;
+      this.collect();
+      this.flushSoon();
+    }
+
+    /** Queue every page sheet that is new or changed; drop overrides of sheets that are gone. */
+    collect() {
       const live = new Set();
       for (const sheet of this.pageSheets()) {
         live.add(sheet);
@@ -128,7 +146,6 @@
       for (const [sheet, rec] of this.overrides) {
         if (!live.has(sheet)) { rec.el.remove(); this.overrides.delete(sheet); }
       }
-      this.flushSoon();
     }
 
     /** Re-process the sheet owned by this <style>/<link> node (CSSOM hook signal). */
@@ -145,37 +162,51 @@
       return `${n}|${rev}|${sheet.href || ''}|${sheet.disabled ? 1 : 0}`;
     }
 
-    /**
-     * Trailing debounce: CSS-in-JS libraries insert rules in bursts, so wait
-     * for a short quiet period, but never longer than ~400 ms in total.
-     */
+    /** Rewrite what is pending now, within this frame's budget; the rest goes to the next frame. */
     flushSoon() {
-      if (this.disposed) return;
-      const now = performance.now();
-      if (!this.pendingSince) this.pendingSince = now;
-      if (this.flushTimer) {
-        if (now - this.pendingSince < 400) clearTimeout(this.flushTimer);
-        else return;
-      }
-      this.flushTimer = setTimeout(() => { this.flushTimer = 0; this.pendingSince = 0; this.flush(); }, 60);
+      if (this.disposed || !this.pending.size) return;
+      if (this.spent < FRAME_BUDGET_MS) this.flush();
+      if (this.pending.size || this.recheck) this.armFrame();
     }
 
-    /** Process pending sheets in time slices so large bursts never jank the page. */
+    /**
+     * One callback per frame, before its paint: finish what the budget left
+     * over, and look at the page's sheets once more.  The MAIN-world hook
+     * stamps a sheet at most once per frame, so rules a library inserts a few
+     * milliseconds after the stamp carry no signal of their own; a sheet
+     * rewritten this frame is checked again in the next one, until a frame
+     * finds nothing new.
+     */
+    armFrame() {
+      if (this.frameArmed || this.disposed) return;
+      this.frameArmed = true;
+      nextFrame(() => {
+        this.frameArmed = false;
+        if (this.disposed) return;
+        this.stats.frames++;
+        this.spent = 0;
+        if (this.recheck) { this.recheck = false; this.collect(); }
+        if (this.pending.size) this.flush();
+        if (this.pending.size || this.recheck) this.armFrame();
+      });
+    }
+
+    /** Rewrite pending sheets until the frame's budget is spent. */
     flush() {
       if (this.disposed) return;
       const started = performance.now();
-      const budget = 10;
       const it = this.pending.values();
       let next = it.next();
       while (!next.done) {
         const sheet = next.value;
         this.pending.delete(sheet);
         this.process(sheet);
-        if (performance.now() - started > budget) break;
+        this.recheck = true;
+        if (this.spent + performance.now() - started > FRAME_BUDGET_MS) break;
         next = it.next();
       }
-      if (this.pending.size) this.flushSoon();
-      else this.ensureOrder();
+      this.spent += performance.now() - started;
+      if (!this.pending.size) this.ensureOrder();
     }
 
     ctx() {
@@ -199,13 +230,15 @@
         this.container.appendChild(rec.el);
       }
       rec.signature = this.signature(sheet);
-      if (sheet.disabled) { rec.el.textContent = ''; return; }
+      if (sheet.disabled) { rec.el.textContent = ''; rec.count = 0; return; }
       const owner = sheet.ownerNode;
       if (this.options.onBrand && owner && owner.id && owner.id.indexOf('fui-FluentProvider') === 0) this.readBrand(sheet, owner.id);
       const ctx = this.ctx();
+      if (this.appendNew(sheet, rec, ctx)) { this.stats.ms += performance.now() - t0; return; }
       let css = null;
       try {
         css = rewriter.rewriteSheet(sheet, ctx);
+        this.remember(sheet, rec);
       } catch (e) {
         // Cross-origin stylesheet: fetch its text and process a constructed copy.
         if (sheet.href) {
@@ -219,6 +252,40 @@
       if (rec.el.textContent !== text) rec.el.textContent = text;
       this.stats.sheets++;
       this.stats.ms += performance.now() - t0;
+    }
+
+    /** Note where a sheet ended when it was last rewritten, so growth can be told from change. */
+    remember(sheet, rec) {
+      const rules = sheet.cssRules;
+      const n = rules.length;
+      rec.count = n;
+      rec.head = n ? rules[0].cssText : '';
+      rec.tail = n ? rules[n - 1].cssText : '';
+    }
+
+    /**
+     * CSS-in-JS libraries (merge-styles, Griffel, load-themed-styles) grow a
+     * sheet by adding rules at its end, often one component at a time.  When
+     * the rules seen last time are still where they were (same first and last
+     * rule), rewrite only the new ones and append them; any other change gets
+     * a full rewrite.  Rewriting a sheet of thousands of rules for every few
+     * new ones was most of the work while SharePoint builds a page.
+     */
+    appendNew(sheet, rec, ctx) {
+      if (!rec.count) return false;
+      let rules;
+      try { rules = sheet.cssRules; } catch (e) { return false; }
+      const n = rules.length;
+      if (n <= rec.count || rules[0].cssText !== rec.head || rules[rec.count - 1].cssText !== rec.tail) return false;
+      const added = [];
+      for (let i = rec.count; i < n; i++) added.push(rules[i]);
+      const css = rewriter.rewriteRules(added, ctx, 0);
+      for (const f of ctx.foreign) this.processForeign(sheet, rec, f.url, f.media, true);
+      rec.count = n;
+      rec.tail = rules[n - 1].cssText;
+      if (css) rec.el.appendChild(this.doc.createTextNode(rewriter.scoped(css, this.options.limitSelector)));
+      this.stats.appends++;
+      return true;
     }
 
     /** Report a Fluent v9 provider's light brand colour (its theme's step 80) to the engine. */
@@ -297,13 +364,12 @@
     /** Regenerate everything (settings changed). */
     rebuild(options) {
       if (options) this.options = { ...this.options, ...options };
-      for (const sheet of this.overrides.keys()) this.pending.add(sheet);
+      for (const [sheet, rec] of this.overrides) { rec.count = 0; this.pending.add(sheet); } // new settings: rewrite in full
       this.flushSoon();
     }
 
     dispose() {
       this.disposed = true;
-      clearTimeout(this.flushTimer);
       if (this.staticEl) this.staticEl.remove();
       if (this.tunedEl) this.tunedEl.remove();
       if (this.inlineEl) this.inlineEl.remove();
