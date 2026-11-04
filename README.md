@@ -9,6 +9,16 @@ A carefully crafted dark theme for **Power Apps canvas Studio**, the maker porta
 - Accessible by design: every text/surface pairing the theme produces is checked against WCAG 2.1 AA (AAA in the high-contrast setting), focus rings are preserved, Windows High Contrast mode is respected, and the extension never changes the DOM structure or ARIA of the page.
 - Zero telemetry, no accounts, no network requests other than fetching Studio's own stylesheets.
 
+## Screenshots
+
+**Classic** style in canvas Studio. The app being designed keeps its own light colours.
+
+![Power Apps Studio in the Classic dark style](sample/classic.png)
+
+**Neon** style in canvas Studio.
+
+![Power Apps Studio in the Neon style](sample/Neon.png)
+
 ## Why not a general dark-mode extension?
 
 For Power Platform work, a dedicated theme does things a general one cannot, and those things matter in a design tool. The comparison below follows from how general dark modes work (they recolour every page by the same rules); it is not a benchmark against any particular product.
