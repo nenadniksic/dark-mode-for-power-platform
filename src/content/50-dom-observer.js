@@ -19,7 +19,7 @@
       this.target = target;         // Document or ShadowRoot
       this.h = handlers;            // { styleManager, inline, onShadowRoot }
       this.observer = null;
-      this.scanTimer = 0;
+      this.scanQueued = false;
     }
 
     start() {
@@ -35,15 +35,21 @@
 
     stop() {
       if (this.observer) { this.observer.disconnect(); this.observer = null; }
-      clearTimeout(this.scanTimer);
     }
 
+    /* Scanning is cheap (a rule count per sheet), so it runs at once, in this
+       callback, and the new styles are rewritten before the page paints them. */
     scheduleScan() {
-      if (this.scanTimer) return;
-      this.scanTimer = setTimeout(() => { this.scanTimer = 0; this.h.styleManager.scan(); }, 20);
+      this.scanQueued = true;
     }
 
     onMutations(muts) {
+      this.scanQueued = false;
+      this.handle(muts);
+      if (this.scanQueued) { this.scanQueued = false; this.h.styleManager.scan(); }
+    }
+
+    handle(muts) {
       const sm = this.h.styleManager;
       const inline = this.h.inline;
       for (let i = 0; i < muts.length; i++) {
