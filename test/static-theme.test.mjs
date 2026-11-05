@@ -192,3 +192,13 @@ test('Neon: the disabled colour is a near-grey, not the magenta of its stroke st
   // Classic keeps its grey
   assert.match(CAPD.staticTheme.paletteVars({ ...settings, look: 'classic' }), /--capd-disabled:#7e7e7e;/);
 });
+
+test('Fluent v8 surface and input rules skip Fluent v9 elements that carry v8 class names', () => {
+  // SharePoint: <div class="fui-DialogBody ... ms-Dialog-main">, <span class="fui-Input ... ms-TextField-fieldGroup">
+  const css = CAPD.themeCSS.fluent8;
+  for (const cls of ['ms-Dialog-main', 'ms-Callout-main', 'ms-Panel-main', 'ms-ContextualMenu', 'ms-TextField-fieldGroup', 'ms-Dropdown-title', 'ms-ComboBox', 'ms-SearchBox']) {
+    const bare = new RegExp(`\\.${cls}(?![\\w-]|:not\\(\\[class\\*="fui-"\\]\\))[^{]*\\{[^}]*background-color`);
+    assert.ok(!bare.test(css), `${cls} is painted without excluding v9 elements`);
+  }
+  assert.ok(css.includes('.ms-Dialog-main:not([class*="fui-"])'));
+});

@@ -5,14 +5,18 @@
    a generic mapping is not good enough.
    ========================================================================== */
 
-/* Elevated surfaces should sit visibly above the page */
-html[data-capd="dark"] .ms-Callout-main,
-html[data-capd="dark"] .ms-ContextualMenu,
-html[data-capd="dark"] .ms-Dropdown-callout .ms-Callout-main,
-html[data-capd="dark"] .ms-Panel-main,
-html[data-capd="dark"] .ms-Dialog-main,
-html[data-capd="dark"] .ms-Modal .ms-Dialog-main,
-html[data-capd="dark"] .ms-TeachingBubble-content { background-color: var(--capd-raised) !important; }
+/* Elevated surfaces should sit visibly above the page.  Fluent v8's own
+   only: SharePoint renders Fluent v9 components with the v8 class names
+   added (a v9 dialog body is also .ms-Dialog-main, a v9 input also
+   .ms-TextField-fieldGroup), and v9 is already dark through its tokens.
+   Painting those again drew a lighter box inside the dialog (Create view). */
+html[data-capd="dark"] .ms-Callout-main:not([class*="fui-"]),
+html[data-capd="dark"] .ms-ContextualMenu:not([class*="fui-"]),
+html[data-capd="dark"] .ms-Dropdown-callout .ms-Callout-main:not([class*="fui-"]),
+html[data-capd="dark"] .ms-Panel-main:not([class*="fui-"]),
+html[data-capd="dark"] .ms-Dialog-main:not([class*="fui-"]),
+html[data-capd="dark"] .ms-Modal .ms-Dialog-main:not([class*="fui-"]),
+html[data-capd="dark"] .ms-TeachingBubble-content:not([class*="fui-"]) { background-color: var(--capd-raised) !important; }
 html[data-capd="dark"] .ms-Callout-beak { background-color: var(--capd-raised) !important; }
 html[data-capd="dark"] .ms-Callout-main,
 html[data-capd="dark"] .ms-ContextualMenu-container { box-shadow: var(--capd-shadow) !important; }
@@ -27,15 +31,15 @@ html[data-capd="dark"] .ms-Button--primary .ms-Button-label { color: #ffffff !im
 html[data-capd="dark"] .ms-Button--primary.is-disabled,
 html[data-capd="dark"] .ms-Button--primary.is-disabled .ms-Button-label { color: var(--capd-t3) !important; }
 
-/* Inputs */
-html[data-capd="dark"] .ms-TextField-fieldGroup,
-html[data-capd="dark"] .ms-Dropdown-title,
-html[data-capd="dark"] .ms-ComboBox,
-html[data-capd="dark"] .ms-SearchBox { background-color: var(--capd-s2) !important; border-color: var(--capd-b2) !important; }
-html[data-capd="dark"] .ms-TextField-fieldGroup:hover,
-html[data-capd="dark"] .ms-Dropdown-title:hover,
-html[data-capd="dark"] .ms-ComboBox:hover,
-html[data-capd="dark"] .ms-SearchBox:hover { border-color: var(--capd-b3) !important; }
+/* Inputs (Fluent v8's own, as above) */
+html[data-capd="dark"] .ms-TextField-fieldGroup:not([class*="fui-"]),
+html[data-capd="dark"] .ms-Dropdown-title:not([class*="fui-"]),
+html[data-capd="dark"] .ms-ComboBox:not([class*="fui-"]),
+html[data-capd="dark"] .ms-SearchBox:not([class*="fui-"]) { background-color: var(--capd-s2) !important; border-color: var(--capd-b2) !important; }
+html[data-capd="dark"] .ms-TextField-fieldGroup:not([class*="fui-"]):hover,
+html[data-capd="dark"] .ms-Dropdown-title:not([class*="fui-"]):hover,
+html[data-capd="dark"] .ms-ComboBox:not([class*="fui-"]):hover,
+html[data-capd="dark"] .ms-SearchBox:not([class*="fui-"]):hover { border-color: var(--capd-b3) !important; }
 html[data-capd="dark"] .ms-TextField-fieldGroup input,
 html[data-capd="dark"] .ms-TextField-fieldGroup textarea,
 html[data-capd="dark"] .ms-ComboBox-Input,
