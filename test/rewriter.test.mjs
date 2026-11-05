@@ -202,3 +202,45 @@ test('Neon: a rule that makes all four borders transparent marks the element as 
   // one visible side means the element has a border
   assert.equal(rewriter.rewriteRules([styleRule('.root-1', { ...sides, 'border-bottom-color': 'rgb(138, 136, 134)' })], ctx({ opts: { look: 'neon' } })).includes('--capd-edge'), false);
 });
+
+/* ---- @keyframes ---------------------------------------------------------- */
+const keyframes = (name, frames) => ({ type: 7, name, cssRules: frames.map(([keyText, cssText]) => ({ keyText, style: { cssText } })) });
+
+test('an animation that ends on a colour gets a recoloured copy of its keyframes', () => {
+  // SharePoint's selected-items command bar: fill-mode both, ends white.
+  const rule = keyframes('commandBarBoxShadowAnimation_edf7aa1c', [
+    ['0%', 'background-color: transparent; box-shadow: none;'],
+    ['100%', 'background-color: var(--ms-semanticColors-listBackground); box-shadow: var(--sp-cmd-contextualBar-shadow,var(--ms-effects-elevation8)); transform: translateY(0px);'],
+  ]);
+  const c = ctx({ keyframes: [] });
+  assert.equal(rewriter.rewriteRules([rule], c), '', 'keyframes are handed out, not inlined, when collected');
+  assert.equal(c.keyframes.length, 1);
+  const kf = c.keyframes[0];
+  assert.ok(kf.startsWith('@keyframes commandBarBoxShadowAnimation_edf7aa1c{0%{background-color:transparent;box-shadow:none}100%{'), kf);
+  assert.ok(kf.includes('background-color:var(--capd-bg-ms-semanticColors-listBackground, var(--ms-semanticColors-listBackground))'), kf);
+  assert.ok(kf.includes('transform:translateY(0px)'), 'non-colour declarations are kept: the copy replaces the whole rule');
+  assert.ok(!kf.includes('!important'), 'keyframes ignore !important');
+});
+
+test('keyframes without colours are left alone, and are inlined when nothing collects them', () => {
+  const c = ctx({ keyframes: [] });
+  rewriter.rewriteRules([keyframes('fade', [['from', 'opacity: 0;'], ['to', 'opacity: 1;']])], c);
+  assert.deepEqual(c.keyframes, []);
+  const inline = rewriter.rewriteRules([keyframes('flash', [['to', 'background: #ffffff;']])], ctx());
+  assert.match(inline, /^@keyframes flash\{to\{background:rgb\(\d+, \d+, \d+\)\}\}$/);
+});
+
+test('keyframes inside @media keep their condition, outside the canvas scope', () => {
+  const c = ctx({ keyframes: [], scoped: true });
+  const css = rewriter.rewriteRules([mediaRule('(min-width: 1px)', [keyframes('glow', [['to', 'color: #000000;']])])], c);
+  assert.equal(css, '');
+  assert.match(c.keyframes[0], /^@media \(min-width: 1px\)\{@keyframes glow\{to\{color:rgb\(\d+, \d+, \d+\)\}\}\}$/);
+  assert.equal(rewriter.scoped('.a{color:red !important;}', '#publishedCanvas', c.keyframes),
+    `@scope (:root) to (#publishedCanvas){.a{color:red !important;}}${c.keyframes[0]}`);
+  assert.equal(rewriter.scoped('', '#publishedCanvas', c.keyframes), c.keyframes[0]);
+});
+
+test('splitDeclarations keeps semicolons inside parentheses and strings', () => {
+  assert.deepEqual(rewriter.splitDeclarations('background: url("a;b.png") no-repeat; color: var(--x, rgb(0, 0, 0));'),
+    [['background', 'url("a;b.png") no-repeat'], ['color', 'var(--x, rgb(0, 0, 0))']]);
+});

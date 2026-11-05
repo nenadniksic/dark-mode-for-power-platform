@@ -19,6 +19,12 @@ class FakeRoot {
   createTextNode(data) { return { nodeType: 3, data }; }
   appendChild(el) { this.removeChild(el); this.childNodes.push(el); el.parent = this; this.appends++; return el; }
   removeChild(el) { const i = this.childNodes.indexOf(el); if (i !== -1) this.childNodes.splice(i, 1); }
+  insertBefore(el, ref) {
+    this.removeChild(el);
+    const i = ref ? this.childNodes.indexOf(ref) : -1;
+    if (i === -1) this.childNodes.push(el); else this.childNodes.splice(i, 0, el);
+    el.parent = this; this.appends++; return el;
+  }
 }
 
 require('../src/content/00-namespace.js');
@@ -62,6 +68,25 @@ test('our own elements out of order are still repaired', () => {
   root.appendChild(sm.staticEl);                 // static moved after tuned
   sm.ensureOrder();
   assert.deepEqual(root.childNodes.map((n) => n.getAttribute(CAPD.STYLE_ATTR)), ['static', 'tuned']);
+});
+
+test('a new override that belongs mid-list is slotted in, not everything re-appended', () => {
+  const root = new FakeRoot();
+  const sm = new CAPD.StyleManager(root, options);
+  const sheet = (n) => ({ ownerNode: Object.assign(new FakeEl('STYLE'), { id: 'p' + n }), cssRules: [{ type: 1, selectorText: '.p' + n, style: { length: 1, 0: 'color', getPropertyValue: (p) => (p === 'color' ? '#333333' : ''), getPropertyPriority: () => '' } }], href: null, disabled: false });
+  sm.setStaticCSS('.s{}');
+  sm.setTunedCSS('.t{}');
+  for (let n = 0; n < 40; n++) { const s = sheet(n); root.styleSheets.push(s); sm.process(s); }
+  sm.ensureOrder();
+  const late = sheet('late');
+  root.styleSheets.splice(10, 0, late);             // the page inserts a sheet among its earlier ones
+  sm.process(late);                                  // its override is created at the end
+  const before = root.appends;
+  sm.ensureOrder();
+  assert.equal(root.appends - before, 1, 'only the new override moves');
+  const want = [sm.staticEl, ...root.styleSheets.map((s) => sm.overrides.get(s).el), sm.tunedEl];
+  assert.deepEqual(root.childNodes.slice(-want.length), want);
+  assert.ok(sm.inOrder(want));
 });
 
 test('the root FluentProvider sheet reports its light brand colour', () => {

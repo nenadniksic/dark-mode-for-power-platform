@@ -5,3 +5,11 @@
    site's own theme colour.  These rules cover what a mapping cannot.
    ========================================================================== */
 html[data-capd="dark"] body { background-color: var(--capd-s0) !important; }
+
+/* The document library's command bar sits straight on the page: SharePoint
+   gives its wrapper a neutralLight fill in one rule and clears it with
+   `background: none` (commandBarRoot) in a later one.  The overrides copy
+   colours, not that reset, so the dark copy of the fill came back as a band
+   behind the buttons.  The selected-items bar is a different element and
+   keeps its own surface. */
+html[data-capd="dark"] [class*="commandBarRoot_"]:not([class*="contextual_"]) { background: none !important; }

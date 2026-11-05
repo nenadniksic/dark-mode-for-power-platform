@@ -132,6 +132,56 @@
     return found.length === 1 ? found[0] : found.length ? undefined : null;
   }
 
+  /** `prop: value` pairs of a declaration block's text (semicolons inside parentheses or quotes don't split). */
+  function splitDeclarations(text) {
+    const out = [];
+    let depth = 0, quote = '', cur = '';
+    const flush = () => {
+      const i = cur.indexOf(':');
+      if (i > 0) out.push([cur.slice(0, i).trim().toLowerCase(), cur.slice(i + 1).trim()]);
+      cur = '';
+    };
+    for (const ch of String(text || '')) {
+      if (quote) { if (ch === quote) quote = ''; cur += ch; continue; }
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (ch === '(') depth++;
+      else if (ch === ')') depth = Math.max(0, depth - 1);
+      else if (ch === ';' && depth === 0) { flush(); continue; }
+      cur += ch;
+    }
+    flush();
+    return out;
+  }
+
+  /**
+   * A recoloured copy of an @keyframes rule, or '' when it holds no colour
+   * to change.  An animation outranks every normal declaration, so a colour
+   * it sets survives the overrides: SharePoint fades its selected-items
+   * command bar in to `background-color: var(--ms-semanticColors-listBackground)`
+   * with fill-mode both, and the bar stayed white.  The copy keeps every
+   * declaration, colour or not, because the last @keyframes of a name
+   * replaces the earlier ones whole; the overrides come after the page's
+   * sheets, so the copy is the one that runs.
+   */
+  function rewriteKeyframes(rule, ctx) {
+    const frames = rule.cssRules || [];
+    let changed = false;
+    const parts = [];
+    for (let i = 0; i < frames.length; i++) {
+      const frame = frames[i];
+      const decls = splitDeclarations(frame.style && frame.style.cssText).map(([prop, value]) => {
+        const kind = PROP_KIND[prop];
+        const rewritten = kind && color.rewriteValue(kind, value, ctx.opts, (expr, k) => rewriteVar(expr, k, ctx));
+        if (rewritten && rewritten !== value) { changed = true; return `${prop}:${rewritten}`; }
+        return `${prop}:${value}`;
+      });
+      parts.push(`${frame.keyText}{${decls.join(';')}}`);
+    }
+    if (!changed) return '';
+    const name = /^-?[A-Za-z_][\w-]*$/.test(rule.name) ? rule.name : JSON.stringify(String(rule.name));
+    return `@keyframes ${name}{${parts.join('')}}`;
+  }
+
   function typedName(kind, varName) {
     return `--capd-${kind}-${varName.slice(2)}`;
   }
@@ -283,8 +333,9 @@
    * (possibly empty).  `ctx.onForeign(url, media)` is invoked for @import
    * targets whose rules cannot be read (cross-origin).
    */
-  function rewriteRules(rules, ctx, depth, hops) {
+  function rewriteRules(rules, ctx, depth, hops, conds) {
     depth = depth || 0;
+    conds = conds || [];
     hops = (hops || 0) + 1;
     if (depth > 12 || hops > 40) return '';
     const parts = [];
@@ -306,16 +357,25 @@
             if (important.length) parts.push(`${boostSelector(selector)}{${serializeDecls(important)}}`);
           }
         } else if (type === 4 /* MEDIA_RULE */) {
-          const inner = rewriteRules(rule.cssRules, ctx, depth);
-          if (inner) parts.push(`@media ${rule.conditionText || rule.media.mediaText}{${inner}}`);
+          const cond = `@media ${rule.conditionText || rule.media.mediaText}`;
+          const inner = rewriteRules(rule.cssRules, ctx, depth, hops, conds.concat(cond));
+          if (inner) parts.push(`${cond}{${inner}}`);
         } else if (type === 12 /* SUPPORTS_RULE */) {
-          const inner = rewriteRules(rule.cssRules, ctx, depth);
-          if (inner) parts.push(`@supports ${rule.conditionText}{${inner}}`);
+          const cond = `@supports ${rule.conditionText}`;
+          const inner = rewriteRules(rule.cssRules, ctx, depth, hops, conds.concat(cond));
+          if (inner) parts.push(`${cond}{${inner}}`);
+        } else if (type === 7 /* KEYFRAMES_RULE */) {
+          const kf = rewriteKeyframes(rule, ctx);
+          // @keyframes is not allowed inside @scope: when the output will be
+          // scoped, hand it out separately (with its @media / @supports).
+          if (kf && ctx.keyframes) ctx.keyframes.push(conds.reduceRight((text, cond) => `${cond}{${text}}`, kf));
+          else if (kf) parts.push(kf);
         } else if (type === 3 /* IMPORT_RULE */) {
           const sheet = rule.styleSheet;
           let inner = null;
           if (sheet) {
-            try { inner = rewriteRules(sheet.cssRules, ctx, depth); }
+            const mt = rule.media && rule.media.mediaText;
+            try { inner = rewriteRules(sheet.cssRules, ctx, depth, hops, mt ? conds.concat(`@media ${mt}`) : conds); }
             catch (e) { if (ctx.onForeign) ctx.onForeign(rule.href, rule.media && rule.media.mediaText); }
           }
           if (inner) {
@@ -324,9 +384,10 @@
           }
         } else if (type === 0 && rule.cssRules && (rule.constructor && /Container|Layer|Scope|StartingStyle/.test(rule.constructor.name))) {
           // @container keeps its condition; @layer / @scope / @starting-style are flattened.
-          const inner = rewriteRules(rule.cssRules, ctx, depth);
+          const name = rule.constructor.name;
+          const cond = name === 'CSSContainerRule' ? `@container ${rule.conditionText}` : null;
+          const inner = rewriteRules(rule.cssRules, ctx, depth, hops, cond ? conds.concat(cond) : conds);
           if (inner) {
-            const name = rule.constructor.name;
             if (name === 'CSSContainerRule') parts.push(`@container ${rule.conditionText}{${inner}}`);
             else parts.push(inner);
           }
@@ -335,7 +396,7 @@
           const decls = rewriteDeclarations(rule.style, ctx);
           if (decls.length) parts.push(serializeDecls(decls));
         }
-        // keyframes (7), font-face (5), page (6), namespace (10), counter-style (11),
+        // font-face (5), page (6), namespace (10), counter-style (11),
         // font-feature-values (14), property (0) etc. are intentionally ignored.
       } catch (e) {
         if (ctx.onError) ctx.onError(e, rule);
@@ -354,12 +415,16 @@
     return rewriteRules(rules, ctx, 0);
   }
 
-  /** Wrap override CSS so it never reaches the designer canvas. */
-  function scoped(css, limitSelector) {
-    if (!css) return '';
-    if (!limitSelector) return css;
-    return `@scope (:root) to (${limitSelector}){${css}}`;
+  /**
+   * Wrap override CSS so it never reaches the designer canvas.  Keyframes
+   * collected by rewriteRules (ctx.keyframes) follow the scope, outside it.
+   */
+  function scoped(css, limitSelector, keyframes) {
+    const after = keyframes && keyframes.length ? keyframes.join('') : '';
+    if (!css) return after;
+    if (!limitSelector) return css + after;
+    return `@scope (:root) to (${limitSelector}){${css}}${after}`;
   }
 
-  return { PROP_KIND, KINDS, VAR_SHORTHANDS, colorToken, boostSelector, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
+  return { PROP_KIND, KINDS, VAR_SHORTHANDS, colorToken, splitDeclarations, rewriteKeyframes, boostSelector, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
 });
