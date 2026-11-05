@@ -218,6 +218,7 @@
         onForeign: (url, media) => foreign.push({ url, media }),
         onError: (e) => CAPD.log('rule error', e),
         foreign,
+        keyframes: [], // recoloured @keyframes, placed after the scoped overrides
       };
     }
 
@@ -248,7 +249,7 @@
         css = '';
       }
       for (const f of ctx.foreign) this.processForeign(sheet, rec, f.url, f.media, true);
-      const text = rewriter.scoped(css, this.options.limitSelector);
+      const text = rewriter.scoped(css, this.options.limitSelector, ctx.keyframes);
       if (rec.el.textContent !== text) rec.el.textContent = text;
       this.stats.sheets++;
       this.stats.ms += performance.now() - t0;
@@ -283,7 +284,7 @@
       for (const f of ctx.foreign) this.processForeign(sheet, rec, f.url, f.media, true);
       rec.count = n;
       rec.tail = rules[n - 1].cssText;
-      if (css) rec.el.appendChild(this.doc.createTextNode(rewriter.scoped(css, this.options.limitSelector)));
+      if (css || ctx.keyframes.length) rec.el.appendChild(this.doc.createTextNode(rewriter.scoped(css, this.options.limitSelector, ctx.keyframes)));
       this.stats.appends++;
       return true;
     }
@@ -306,16 +307,18 @@
       if (this.disposed || text == null) return;
       if (!this.overrides.has(sheet)) return; // sheet went away meanwhile
       let css = '';
+      const ctx = this.ctx();
       try {
         const constructed = new CSSStyleSheet();
         constructed.replaceSync(text);
-        css = rewriter.rewriteRules(constructed.cssRules, this.ctx(), 0);
+        css = rewriter.rewriteRules(constructed.cssRules, ctx, 0);
       } catch (e) {
         CAPD.log('foreign sheet failed', url, e);
         return;
       }
-      if (media) css = `@media ${media}{${css}}`;
-      const scopedCss = rewriter.scoped(css, this.options.limitSelector);
+      const keyframes = media ? ctx.keyframes.map((k) => `@media ${media}{${k}}`) : ctx.keyframes;
+      if (media && css) css = `@media ${media}{${css}}`;
+      const scopedCss = rewriter.scoped(css, this.options.limitSelector, keyframes);
       if (append) rec.el.textContent += scopedCss;
       else if (rec.el.textContent !== scopedCss) rec.el.textContent = scopedCss;
       this.ensureOrder();
@@ -343,7 +346,47 @@
       if (this.inlineEl) wanted.push(this.inlineEl);
       if (!wanted.length) return;
       if (this.inOrder(wanted)) return;
-      for (const el of wanted) this.container.appendChild(el);
+      this.reorder(wanted);
+    }
+
+    /**
+     * Put `wanted` at the end of the container, in order, moving as few of
+     * them as possible.  A moved <style> is a stylesheet removed and added
+     * again, each one a style recalculation for the whole page; SharePoint
+     * has a few hundred overrides, and re-appending all of them whenever one
+     * new override landed out of place came to thousands of moves while a
+     * page loaded.  The elements already in order after the page's last node
+     * (the longest such run) stay; the rest are slotted in around them.
+     */
+    reorder(wanted) {
+      const kids = this.container.childNodes;
+      const mine = new Set(wanted);
+      const pos = new Map();
+      let floor = -1; // ours must all follow the page's last node
+      for (let i = 0; i < kids.length; i++) {
+        const k = kids[i];
+        if (mine.has(k)) pos.set(k, i);
+        else if (!(k.nodeType === 1 && k.getAttribute && k.getAttribute(CAPD.STYLE_ATTR))) floor = i; // not another engine's
+      }
+      const run = []; // wanted indices of ours past the floor, in DOM order
+      for (let w = 0; w < wanted.length; w++) { const p = pos.get(wanted[w]); if (p > floor) run.push([p, w]); }
+      run.sort((a, b) => a[0] - b[0]);
+      // Longest increasing subsequence of the wanted indices (patience sort).
+      const tails = [], tailAt = [], prev = [];
+      for (let i = 0; i < run.length; i++) {
+        const v = run[i][1];
+        let lo = 0, hi = tails.length;
+        while (lo < hi) { const mid = (lo + hi) >> 1; if (tails[mid] < v) lo = mid + 1; else hi = mid; }
+        tails[lo] = v; tailAt[lo] = i; prev[i] = lo ? tailAt[lo - 1] : -1;
+      }
+      const keep = new Set();
+      for (let i = tails.length ? tailAt[tails.length - 1] : -1; i >= 0; i = prev[i]) keep.add(wanted[run[i][1]]);
+      let next = null;
+      for (let w = wanted.length - 1; w >= 0; w--) {
+        const el = wanted[w];
+        if (!keep.has(el)) this.container.insertBefore(el, next);
+        next = el;
+      }
     }
 
     /** True when `wanted` ends the container in order, allowing only other engines' elements in between. */

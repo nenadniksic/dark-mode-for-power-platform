@@ -10,6 +10,10 @@
 
 ### Fixed
 - "Follow system" no longer says the theme is active in the popup while your system is light.
+- Pages that build their styles as they go (SharePoint above all) showed light, then went dark in stages. New page styles are now rewritten before the next paint, and a stylesheet that grows is rewritten only in its new part. On a SharePoint library opened from the site home, the delay from a new page style to its dark copy fell from about 120 ms to under one frame.
+- The theme's own style elements were all moved to the end of the page whenever one of them was out of place, a few hundred at a time on SharePoint, each move a style recalculation. Only the ones out of place move now.
+- Colours set by CSS animations stayed light. SharePoint's selected-items command bar fades in to a white surface and keeps it, so selecting a file turned the bar white. Animations that change a colour now run on a dark copy of their keyframes.
+- SharePoint's document library command bar sat on a dark band behind its buttons. SharePoint gives the bar a grey fill in one rule and clears it in a later one; the theme carried the fill over but not the clearing.
 - Buttons the page draws without a border could get a 1px box (SharePoint's command bars: New, Page details, Share, Edit). A Fluent reset style declares `border: var(--strokeWidthThin) solid <colour>` and atomic classes then set the widths to 0; the theme re-asserted the whole shorthand, width included. A border, outline or text-decoration shorthand is now recoloured through its colour alone.
 - Row dividers drawn as a `border-image` gradient with `var()` colours kept their light colour (SharePoint's list and library rows showed bright white lines).
 - When a page has several Fluent v9 theme providers, the accent now comes from the first one created, and a grey "brand" (SharePoint's de-themed panels) is never taken for the accent.
