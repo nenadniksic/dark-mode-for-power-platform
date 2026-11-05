@@ -234,10 +234,21 @@
    * faint pink-lavender and neutral strokes magenta-grey; coloured values
    * (brand, status, syntax colours) keep their own hue.  Lightness is
    * untouched, so every contrast guarantee of the classic mapping holds.
+   *
+   * Dim text keeps only a trace of the tint (`dim`): the light theme's
+   * tertiary, placeholder and disabled greys (#a19f9d and lighter) came out
+   * the same pink as the accent at full tint, so a disabled Save in Studio's
+   * command bar looked as live as Publish beside it.  Classic tells them
+   * apart by grey against colour; Neon now does too.
    */
   const LOOKS = {
-    neon: { bgHue: 268, bg: 0.36, fgHue: 305, fg: 0.32, bdHue: 300, bd: 0.32 },
+    neon: { bgHue: 268, bg: 0.36, fgHue: 305, fg: 0.32, bdHue: 300, bd: 0.32, dimHue: 305, dim: 0.08 },
   };
+
+  /** Neon's text tint for a neutral of light-theme lightness `l`: full for dark text, a trace for dim greys. */
+  function fgTint(t, l) {
+    return lerp(t.fg, t.dim, (l - 0.5) / 0.1);
+  }
 
   /** The tinted grey of lightness `l` for a role ('bg' | 'fg' | 'bd'), or null in the classic style. */
   function tintGrey(role, l, look) {
@@ -311,7 +322,7 @@
       case 'fg':
         l = mapFgLightness(hsl.l, p);
         if (hsl.l <= 0.5) s = Math.min(s, p.satCap);
-        if (tint) { h = tint.fgHue; s = tint.fg; }
+        if (tint) { h = tint.fgHue; s = fgTint(tint, hsl.l); }
         if (hsl.l <= 0.9) {
           // Guarantee legibility: raise lightness until the mapped text meets
           // the contrast target (WCAG AA, AAA in high-contrast mode) on the

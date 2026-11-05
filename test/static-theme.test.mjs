@@ -176,3 +176,19 @@ test('Neon: the borderless marks are registered as non-inheriting, and only defa
   const neon = CAPD.themeCSS.neon;
   for (const rule of neon.split('}').filter((r) => r.includes('var(--capd-halo') || r.includes('var(--capd-edge'))) assert.ok(rule.slice(0, rule.indexOf('{')).split(/,(?![^(]*\))/).every((s) => s.includes('.ms-Button--default')), rule.slice(0, 120));
 });
+
+test('Neon: the disabled colour is a near-grey, not the magenta of its stroke step, and still reads at 3:1', () => {
+  const color = CAPD.color;
+  for (const surface of ['dim', 'dark', 'black']) {
+    const s = { ...settings, look: 'neon', surface };
+    const pv = CAPD.staticTheme.paletteVars(s);
+    const disabled = color.parse(/--capd-disabled:([^;]+)/.exec(pv)[1]);
+    const raised = color.parse(/--capd-raised:([^;]+)/.exec(pv)[1]);
+    assert.ok(Math.max(disabled.r, disabled.g, disabled.b) - Math.min(disabled.r, disabled.g, disabled.b) <= 24, `${surface}: ${color.format(disabled)}`);
+    assert.ok(color.contrast(disabled, raised) >= 2.95, `${surface}: ${color.contrast(disabled, raised)}`);
+    const token = /--colorNeutralForegroundDisabled:([^ ;]+)/.exec(CAPD.staticTheme.tokenCSS(s))[1];
+    assert.equal(color.format(color.parse(token)), color.format(disabled), 'token and palette variable agree');
+  }
+  // Classic keeps its grey
+  assert.match(CAPD.staticTheme.paletteVars({ ...settings, look: 'classic' }), /--capd-disabled:#7e7e7e;/);
+});

@@ -119,3 +119,14 @@ test('Neon tint changes hue and saturation of neutrals only, never their lightne
     assert.ok(color.contrast(fg, surface) >= 4.5, `${hex} text on the neon surface`);
   }
 });
+
+test('Neon: dim greys (disabled, placeholder) stay nearly grey, so they never look like the accent', () => {
+  const chroma = (c) => Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+  const neon = (hex) => color.modify('fg', color.parse(hex), { look: 'neon' });
+  // Fluent v8 paints a disabled command-bar icon in these greys (Studio's Save)
+  for (const hex of ['#a19f9d', '#c8c6c4']) assert.ok(chroma(neon(hex)) <= 20, `${hex} -> ${color.format(neon(hex))}`);
+  // ordinary text keeps the pink-lavender tint
+  for (const hex of ['#323130', '#605e5c']) assert.ok(chroma(neon(hex)) >= 30, `${hex} -> ${color.format(neon(hex))}`);
+  // Classic is untouched: still a pure grey
+  assert.equal(chroma(color.modify('fg', color.parse('#a19f9d'))), 0);
+});

@@ -85,6 +85,19 @@
     return t ? color.toHex(t) : greyHex(n);
   }
 
+  /**
+   * The disabled colour (colorNeutralForegroundDisabled, --capd-disabled):
+   * Fluent's ramp step for it is a stroke grey, which Neon tints magenta
+   * (#a25aa2, close to the accent).  It takes the dim text tint instead, a
+   * trace of violet on grey, and is raised to DISABLED_MIN on `against`.
+   */
+  function disabledFor(settings, against) {
+    const spec = (CAPD.FLUENT_DARK_SPEC || {}).colorNeutralForegroundDisabled || 'g36';
+    const m = /^g(\d+)$/.exec(spec);
+    const base = m ? shade(adjustGrey(+m[1], settings), 'dim', settings) : resolveSpec(spec, settings);
+    return ensureContrast(base, against, DISABLED_MIN);
+  }
+
   /** Fluent grey ramp step `n` as this theme draws it: surface offset, contrast and style applied. */
   function greyFor(n, settings) {
     return shade(adjustGrey(n, settings), n >= 50 ? 'fg' : n >= 24 ? 'bd' : 'bg', settings);
@@ -193,7 +206,7 @@
       if (FG_TOKEN_RE.test(name) && !FG_TOKEN_SKIP_RE.test(name)) value = ensureContrast(value, surface, settings.contrast === 'high' && /^colorNeutralForeground/.test(name) ? 7 : 4.5);
       else if (BRAND_STROKE_RE.test(name)) value = ensureContrast(value, surface, 3);
       else if (BRAND_BG_RE.test(name)) value = darkenUnder(value, WHITE, 4.5);
-      else if (name === 'colorNeutralForegroundDisabled') value = ensureContrast(value, surface, DISABLED_MIN);
+      else if (name === 'colorNeutralForegroundDisabled') value = disabledFor(settings, surface);
       if (name === 'colorStrokeFocus2' && settings.look === 'neon') value = NEON_CYAN;
       decls.push(`--${name}:${value} !important;`);
     }
@@ -244,7 +257,7 @@
       'b3': map('bd', '#8a8886'),
       // disabled text and the marks of disabled controls: the same colour
       // as the Fluent token colorNeutralForegroundDisabled
-      'disabled': ensureContrast(resolveSpec(spec.colorNeutralForegroundDisabled || 'g36', settings), color.parse(raised), DISABLED_MIN),
+      'disabled': disabledFor(settings, color.parse(raised)),
       'accent': onRaised(brand[100] || '#bc5fbc'),
       'accent-hover': onRaised(brand[110] || '#cb79cb'),
       'accent-bg': brand[70] || '#852985',
