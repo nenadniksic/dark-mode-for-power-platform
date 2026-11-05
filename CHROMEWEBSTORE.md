@@ -1,6 +1,6 @@
 # Chrome Web Store Listing — Dark Mode for Power Platform
 
-> Last Updated: 2026-11-04
+> Last Updated: 2026-11-05
 
 ## Store Listing
 
@@ -15,7 +15,9 @@ A carefully crafted dark theme for Power Apps Studio, the maker portal, Power Au
 ```
 Dark Mode for Power Platform makes Power Apps Studio, the Power Apps maker portal and Power Automate dark. The app you are building keeps its own colours, and colour pickers show true colours.
 
-Choose a Classic or Neon style and a Dim, Dark or Black surface. Text is checked for readable contrast. Toggle it with Alt+Shift+D.
+Choose a Classic or Neon style and a Dim, Dark or Black surface. Text is checked for readable contrast.
+
+Keep it dark all the time, follow your system, or go dark from sunset to sunrise or between hours you choose. Sunset is worked out on your computer from your time zone or coordinates you enter, with no location access. Alt+Shift+D switches it by hand.
 
 It runs only on Power Platform sites, and on SharePoint if you turn that on. It collects no data.
 
@@ -114,7 +116,7 @@ https://github.com/nenadniksic/dark-mode-for-power-platform/blob/main/PRIVACY.md
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| Unreleased | 2026-11-04 | Opt-in SharePoint support (optional host permissions, `scripting`); border and row-divider fixes. Screenshots: consider one of a SharePoint list. | Not submitted |
+| Unreleased | 2026-11-05 | Scheduled dark mode (sunset to sunrise, custom hours, switch by hand); opt-in SharePoint support (optional host permissions, `scripting`); new page styles are recoloured before the next paint; animated colours, Fluent v9 dialogs and switched-off borders handled; Neon disabled controls read as disabled. Screenshots: consider one of a SharePoint list. | Not submitted |
 | 1.2.1 | 2026-11-03 | Renamed from Canvas Studio Dark Mode, now that it covers Power Automate and the whole maker portal. | Draft |
 | 1.2.0 | 2026-11-03 | Neon style with glowing controls; property label and command-bar fixes; light insert button over the canvas. | Not submitted |
 | 1.1.0 | 2026-11-03 | Power Automate support; brand-aware accents; Studio sprite icon and colour picker fixes; contrast audit. | Not submitted |

@@ -4,7 +4,7 @@
   "private": true,
   "repository": { "type": "git", "url": "https://github.com/nenadniksic/dark-mode-for-power-platform.git" },
   "homepage": "https://github.com/nenadniksic/dark-mode-for-power-platform",
-  "description": "Dark mode for Power Apps Studio, the maker portal and Power Automate (Chrome extension, Manifest V3).",
+  "description": "Dark mode for Power Apps Studio, the maker portal, Power Automate and, opt-in, SharePoint, with scheduling (Chrome extension, Manifest V3).",
   "scripts": {
     "build": "node tools/build.mjs",
     "test": "node --test test/*.test.mjs",
