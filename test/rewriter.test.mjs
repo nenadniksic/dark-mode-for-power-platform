@@ -47,7 +47,8 @@ test('custom properties get typed variants and var() usages are retargeted', () 
   assert.ok(css.includes('--capd-fg-vscode-editor-foreground:rgb('));
   assert.ok(!css.includes('--capd-bg-vscode-badge-size'));
   assert.ok(css.includes('.monaco-editor .margin{background-color:var(--capd-bg-vscode-editor-background, var(--vscode-editor-background)) !important;}'));
-  assert.ok(/\.mtk1\{color:var\(--capd-fg-vscode-editor-foreground, rgb\(\d+, \d+, \d+\)\) !important;\}/.test(css));
+  // typed variant, then the page's own variable, then the (recoloured) fallback
+  assert.ok(/\.mtk1\{color:var\(--capd-fg-vscode-editor-foreground, var\(--vscode-editor-foreground, rgb\(\d+, \d+, \d+\)\)\) !important;\}/.test(css), css);
 });
 
 test('Fluent design tokens are excluded from dynamic handling', () => {
@@ -127,7 +128,7 @@ test('shorthands declared with var() are rewritten even though their longhands r
     ['background-image', 'background-position-x', 'background-color', 'border-bottom-width', 'border-bottom-style', 'border-bottom-color']) };
   const css = rewriter.rewriteRules([bg], ctx());
   assert.equal(css, '.react-flow__controls-button{'
-    + 'background:var(--capd-bg-xy-controls-button-background-color, var(--capd-bg-xy-controls-button-background-color-default, var(--xy-controls-button-background-color-default))) !important;'
+    + 'background:var(--capd-bg-xy-controls-button-background-color, var(--xy-controls-button-background-color, var(--capd-bg-xy-controls-button-background-color-default, var(--xy-controls-button-background-color-default)))) !important;'
     + 'border-bottom-color:var(--capd-bd-xy-controls-button-border-color-default, var(--xy-controls-button-border-color-default)) !important;}');
 });
 
@@ -147,7 +148,7 @@ test('a border shorthand is recoloured through its colour longhand, never re-ass
   assert.equal(rewriter.colorToken('var(--a) var(--b)'), undefined, 'two candidates: ambiguous');
   assert.equal(rewriter.colorToken('var(--sp-grid-outer-shell-border,1px solid var(--colorNeutralStroke3))'), undefined, 'one var() alone may hold the whole border');
   const shell = { type: 1, selectorText: '.shell', style: pendingDecl({ border: 'var(--sp-shell,1px solid var(--colorNeutralStroke3))' }, ['border-top-width', 'border-top-color']) };
-  assert.equal(rewriter.rewriteRules([shell], ctx()), '.shell{border:var(--capd-bd-sp-shell, 1px solid var(--colorNeutralStroke3)) !important;}', 'kept as a shorthand');
+  assert.equal(rewriter.rewriteRules([shell], ctx()), '.shell{border:var(--capd-bd-sp-shell, var(--sp-shell, 1px solid var(--colorNeutralStroke3))) !important;}', 'kept as a shorthand');
 });
 
 test('a border-image shorthand with var() colours is rewritten (SharePoint list row dividers)', () => {
@@ -243,4 +244,14 @@ test('keyframes inside @media keep their condition, outside the canvas scope', (
 test('splitDeclarations keeps semicolons inside parentheses and strings', () => {
   assert.deepEqual(rewriter.splitDeclarations('background: url("a;b.png") no-repeat; color: var(--x, rgb(0, 0, 0));'),
     [['background', 'url("a;b.png") no-repeat'], ['color', 'var(--x, rgb(0, 0, 0))']]);
+});
+
+test("a variable the page set to a non-colour (none) wins over the rule's fallback", () => {
+  // SharePoint: --sp-cmd-barWrapper-border-bottom: none switches the command bar's bottom border off
+  const css = rewriter.rewriteRules([
+    styleRule('.isNGSP', { '--sp-cmd-barWrapper-border-bottom': 'none' }),
+    styleRule('.commandbarWrapper', { 'border-bottom': 'var(--sp-cmd-barWrapper-border-bottom,1px solid var(--ms-palette-neutralQuaternaryAlt))' }),
+  ], ctx());
+  assert.ok(!css.includes('--capd-bd-sp-cmd-barWrapper-border-bottom:'), 'no typed variant for a non-colour value');
+  assert.ok(css.includes('var(--capd-bd-sp-cmd-barWrapper-border-bottom, var(--sp-cmd-barWrapper-border-bottom, 1px solid var(--capd-bd-ms-palette-neutralQuaternaryAlt, var(--ms-palette-neutralQuaternaryAlt))))'), css);
 });

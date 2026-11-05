@@ -189,6 +189,12 @@
   /**
    * Rewrite a single var() expression for the given role.  Nested fallbacks
    * are handled recursively; excluded (Fluent token) names are left alone.
+   *
+   * The typed variant exists only where the page gave the variable a colour.
+   * Where it gave it something else, the page's own value has to come next,
+   * before the fallback: SharePoint sets --sp-cmd-barWrapper-border-bottom
+   * to `none`, and skipping straight to the fallback (`1px solid ...`) drew
+   * a border the page had switched off.
    */
   function rewriteVar(expr, kind, ctx) {
     const m = VAR_RE.exec(expr);
@@ -199,7 +205,7 @@
     if (fallback !== undefined) {
       const fb = color.rewriteValue(kind, fallback, ctx.opts, (v, k) => rewriteVar(v, k, ctx));
       if (fb) fallback = fb;
-      return `var(${typedName(kind, name)}, ${fallback})`;
+      return `var(${typedName(kind, name)}, var(${name}, ${fallback}))`;
     }
     return `var(${typedName(kind, name)}, var(${name}))`;
   }
