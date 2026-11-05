@@ -10,6 +10,7 @@
 
 ### Fixed
 - "Follow system" no longer says the theme is active in the popup while your system is light.
+- In the Neon style, disabled buttons looked as live as enabled ones (Studio's Save and its menu beside Publish). Neon tinted every grey pink, and the greys Fluent uses for disabled and placeholder text came out the same pink as the accent; the disabled colour itself was a magenta. Those greys now keep only a trace of violet, so disabled reads grey against coloured, as in Classic. Ordinary text keeps its tint.
 - Pages that build their styles as they go (SharePoint above all) showed light, then went dark in stages. New page styles are now rewritten before the next paint, and a stylesheet that grows is rewritten only in its new part. On a SharePoint library opened from the site home, the delay from a new page style to its dark copy fell from about 120 ms to under one frame.
 - The theme's own style elements were all moved to the end of the page whenever one of them was out of place, a few hundred at a time on SharePoint, each move a style recalculation. Only the ones out of place move now.
 - Colours set by CSS animations stayed light. SharePoint's selected-items command bar fades in to a white surface and keeps it, so selecting a file turned the bar white. Animations that change a colour now run on a dark copy of their keyframes.
