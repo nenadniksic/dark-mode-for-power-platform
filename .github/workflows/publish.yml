@@ -1,0 +1,61 @@
+# Publishes to the Chrome Web Store. Push a tag that matches manifest.json's
+# version (for example v1.3.0) to test, package, upload and submit for review;
+# the update goes live once Google approves it. Run it by hand from the Actions
+# tab to check the credentials (status) or to submit without a tag.
+# Setup and secrets: CHROMEWEBSTORE.md, "Automated publishing".
+name: Publish to Chrome Web Store
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: status = check credentials only; publish = live once approved; staged = wait for a manual Publish after approval
+        type: choice
+        options: [status, publish, staged]
+        default: status
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chrome-web-store
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: chrome-web-store
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Test
+        run: npm test
+
+      - name: Package
+        run: npm run package
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: extension-zip
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Upload and submit for review
+        env:
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_ITEM_ID: ${{ secrets.CWS_ITEM_ID }}
+          CWS_SERVICE_ACCOUNT_KEY: ${{ secrets.CWS_SERVICE_ACCOUNT_KEY }}
+          MODE: ${{ github.event_name == 'push' && 'publish' || inputs.mode }}
+          TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        run: |
+          case "$MODE" in
+            status)  node tools/publish-cws.mjs --status ;;
+            staged)  node tools/publish-cws.mjs --staged ${TAG:+--tag "$TAG"} ;;
+            *)       node tools/publish-cws.mjs ${TAG:+--tag "$TAG"} ;;
+          esac

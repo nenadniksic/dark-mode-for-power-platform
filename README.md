@@ -91,7 +91,10 @@ npm run tokens      # regenerates the Fluent dark token spec from tools/data/flu
 npm run icons       # renders icons/*.png from a tiny built-in rasteriser
 npm run standalone  # builds dist/standalone/capd-standalone.js for browser-driven checks without installing
 npm run package     # dist/dark-mode-for-power-platform-<version>.zip
+npm run cws:status  # Chrome Web Store: what is published and submitted (needs the credentials below)
 ```
+
+Releases go to the Chrome Web Store from GitHub Actions: bump the version in `manifest.json` and `package.json`, then push a matching tag (`git tag v1.3.0 && git push origin v1.3.0`). [`.github/workflows/publish.yml`](.github/workflows/publish.yml) tests, packages, uploads and submits for review, and the update goes live once Google approves it. One-time setup is in [CHROMEWEBSTORE.md](CHROMEWEBSTORE.md#automated-publishing).
 
 Load the folder as an unpacked extension after `npm run build`; the generated files are committed so a fresh clone loads as-is.
 

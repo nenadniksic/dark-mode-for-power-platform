@@ -1,6 +1,6 @@
 {
   "name": "dark-mode-for-power-platform",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "private": true,
   "repository": { "type": "git", "url": "https://github.com/nenadniksic/dark-mode-for-power-platform.git" },
   "homepage": "https://github.com/nenadniksic/dark-mode-for-power-platform",
@@ -13,7 +13,9 @@
     "timezones": "node tools/gen-timezones.mjs",
     "contrast": "node tools/contrast-check.mjs",
     "package": "node tools/build.mjs && node tools/package.mjs",
-    "standalone": "node tools/build.mjs --standalone"
+    "standalone": "node tools/build.mjs --standalone",
+    "cws:status": "node tools/publish-cws.mjs --status",
+    "cws:publish": "node tools/publish-cws.mjs"
   },
   "engines": { "node": ">=20" },
   "license": "MIT"

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 — 2026-11-09
 
 ### Added
 - Scheduled dark mode. Appearance now offers *Sunset to sunrise* and *Custom hours* beside *Always dark* and *Follow system*, in the popup and the options page. Sunset and sunrise are worked out on your computer, for the city your time zone is named after or for coordinates you enter in the options; the extension asks for no location permission and goes online for nothing. Custom hours can run overnight (19:00 to 07:00) or within the day. Visible tabs switch at the scheduled minute; after sleep they catch up within a minute, and a hidden tab as soon as you return to it. The popup says what comes next ("Light until sunset at 16:24").
