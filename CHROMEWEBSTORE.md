@@ -146,7 +146,7 @@ To hold an approved update for a manual Publish, run the workflow by hand in **s
 
 | Version | Date | Changes | Status |
 |---------|------|---------|--------|
-| 1.3.0 | 2026-11-09 | Scheduled dark mode (sunset to sunrise, custom hours, switch by hand); opt-in SharePoint support (optional host permissions, `scripting`); new page styles are recoloured before the next paint; animated colours, Fluent v9 dialogs and switched-off borders handled; Neon disabled controls read as disabled. Screenshots: consider one of a SharePoint list. | Built; upload as a draft, add the `scripting` justification, then submit |
+| 1.3.0 | 2026-11-09 | Scheduled dark mode (sunset to sunrise, custom hours, switch by hand); opt-in SharePoint support (optional host permissions, `scripting`); new page styles are recoloured before the next paint; animated colours, Fluent v9 dialogs and switched-off borders handled; Neon disabled controls read as disabled. Screenshots: consider one of a SharePoint list. | Submitted 2026-11-10 (in review; publishes automatically when approved) |
 | 1.2.1 | 2026-11-03 | Renamed from Canvas Studio Dark Mode, now that it covers Power Automate and the whole maker portal. | Published (100%, confirmed through the API 2026-11-09) |
 | 1.2.0 | 2026-11-03 | Neon style with glowing controls; property label and command-bar fixes; light insert button over the canvas. | Not submitted |
 | 1.1.0 | 2026-11-03 | Power Automate support; brand-aware accents; Studio sprite icon and colour picker fixes; contrast audit. | Not submitted |
