@@ -6,7 +6,7 @@
   'use strict';
   const CAPD = (root.CAPD = root.CAPD || {});
 
-  CAPD.VERSION = '1.3.1';
+  CAPD.VERSION = '1.3.2';
   CAPD.ATTR = 'data-capd';                 // on <html>: "dark" while active
   CAPD.INLINE_ATTR = 'data-capd-inline';   // on elements whose inline colours were adapted
   CAPD.REV_ATTR = 'data-capd-rev';         // set by the MAIN-world CSSOM hook on <style>/<link>
