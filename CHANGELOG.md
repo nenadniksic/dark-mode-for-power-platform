@@ -6,6 +6,7 @@
 - The *Dark canvas backdrop* switch did nothing, and had not since 1.2.0: Studio's dotted work area kept a dark grey from Studio's own colours in both positions. Since 1.2.0 the theme repeats a page's `!important` declarations with a specificity boost, so that they keep beating the page's normal ones. Studio styles the backdrop with `!important`, and the boosted copy outranked the theme's own backdrop rule. The theme's hand-written `!important` rules now carry the same boost. The switch works again, and the backdrop and its dots are the theme's colours (Neon's pink dots included).
 - Other hand-written rules the same boost had overruled now apply again: the formula bar matches the command bar, message bars keep their warning, error and success tint (Studio's read-only notice), and disabled property buttons in the Neon style get their plain edge.
 - Links on those tinted message bars are lightened to read at 4.5:1 or more (Studio's "Learn more").
+- The theme's thin scrollbars and its text-selection colour reached only the page's main scroll area, never the panes inside it (tree view, properties, menus), and had not since 1.0.0. The build's CSS minifier dropped the space in `html ::-webkit-scrollbar`, which made the rule apply to the root element alone. It now keeps a space before `:` wherever that space joins two parts of a selector.
 
 ## 1.3.0 — 2026-11-09
 

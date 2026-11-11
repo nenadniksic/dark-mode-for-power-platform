@@ -79,8 +79,7 @@ html[data-capd="dark"] .ms-MessageBar--error { background-color: var(--capd-tint
 html[data-capd="dark"] .ms-MessageBar--warning,
 html[data-capd="dark"] .ms-MessageBar--severeWarning { background-color: var(--capd-tint-warning) !important; }
 html[data-capd="dark"] .ms-MessageBar--success { background-color: var(--capd-tint-success) !important; }
-/* the accent alone drops below 4.5:1 on the tints (Studio's read-only bar: "Learn more").
-   No descendant step may start with ":" - the build drops the space before it. */
+/* the accent alone drops below 4.5:1 on the tints (Studio's read-only bar: "Learn more"). */
 html[data-capd="dark"] .ms-MessageBar:is(.ms-MessageBar--error, .ms-MessageBar--warning, .ms-MessageBar--severeWarning, .ms-MessageBar--success) a,
 html[data-capd="dark"] .ms-MessageBar:is(.ms-MessageBar--error, .ms-MessageBar--warning, .ms-MessageBar--severeWarning, .ms-MessageBar--success) .ms-Link,
 html[data-capd="dark"] .ms-MessageBar:is(.ms-MessageBar--error, .ms-MessageBar--warning, .ms-MessageBar--severeWarning, .ms-MessageBar--success) .fui-Link { color: var(--capd-link-on-tint) !important; }
