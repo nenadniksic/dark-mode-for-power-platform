@@ -75,7 +75,12 @@ html[data-capd="dark"] .ms-Pivot-link:hover { background-color: rgba(255, 255, 2
 
 /* Message bars keep their semantic tint but on dark */
 html[data-capd="dark"] .ms-MessageBar { background-color: var(--capd-s3) !important; }
-html[data-capd="dark"] .ms-MessageBar--error { background-color: rgba(241, 112, 123, 0.16) !important; }
+html[data-capd="dark"] .ms-MessageBar--error { background-color: var(--capd-tint-error) !important; }
 html[data-capd="dark"] .ms-MessageBar--warning,
-html[data-capd="dark"] .ms-MessageBar--severeWarning { background-color: rgba(248, 196, 80, 0.16) !important; }
-html[data-capd="dark"] .ms-MessageBar--success { background-color: rgba(108, 203, 95, 0.16) !important; }
+html[data-capd="dark"] .ms-MessageBar--severeWarning { background-color: var(--capd-tint-warning) !important; }
+html[data-capd="dark"] .ms-MessageBar--success { background-color: var(--capd-tint-success) !important; }
+/* the accent alone drops below 4.5:1 on the tints (Studio's read-only bar: "Learn more").
+   No descendant step may start with ":" - the build drops the space before it. */
+html[data-capd="dark"] .ms-MessageBar:is(.ms-MessageBar--error, .ms-MessageBar--warning, .ms-MessageBar--severeWarning, .ms-MessageBar--success) a,
+html[data-capd="dark"] .ms-MessageBar:is(.ms-MessageBar--error, .ms-MessageBar--warning, .ms-MessageBar--severeWarning, .ms-MessageBar--success) .ms-Link,
+html[data-capd="dark"] .ms-MessageBar:is(.ms-MessageBar--error, .ms-MessageBar--warning, .ms-MessageBar--severeWarning, .ms-MessageBar--success) .fui-Link { color: var(--capd-link-on-tint) !important; }

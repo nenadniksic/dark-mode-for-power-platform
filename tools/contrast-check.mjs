@@ -101,6 +101,14 @@ export function runChecks() {
       report.push(`${label.padEnd(24)} --capd-${fgName} on --capd-${bgName} ${ratio.toFixed(2).padStart(6)}  (min ${min})`);
       if (ratio < min) failures.push(`${label}: --capd-${fgName} ${vars[fgName]} on --capd-${bgName} ${vars[bgName]} = ${ratio.toFixed(2)} < ${min}`);
     }
+    // links on the message bars' translucent tints, laid over the raised surface
+    for (const tintName of ['tint-error', 'tint-warning', 'tint-success']) {
+      const tint = color.parse(vars[tintName]), under = color.parse(vars.raised);
+      const bg = { r: tint.r * tint.a + under.r * (1 - tint.a), g: tint.g * tint.a + under.g * (1 - tint.a), b: tint.b * tint.a + under.b * (1 - tint.a), a: 1 };
+      const ratio = color.contrast(color.parse(vars['link-on-tint']), bg);
+      report.push(`${label.padEnd(24)} --capd-link-on-tint on --capd-${tintName} over raised ${ratio.toFixed(2).padStart(6)}  (min 4.5)`);
+      if (ratio < 4.5) failures.push(`${label}: --capd-link-on-tint ${vars['link-on-tint']} on ${tintName} over raised ${hex(bg)} = ${ratio.toFixed(2)} < 4.5`);
+    }
   }
   CAPD.brandSeed = null;
   return { failures, report };

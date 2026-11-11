@@ -8,11 +8,13 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(here, '..');
 const rel = (p) => path.relative(rootDir, p);
+const { boostImportantRules } = createRequire(import.meta.url)('../src/content/20-css-rewriter.js');
 
 /* 1. theme CSS bundle */
 const themeDir = path.join(rootDir, 'theme');
@@ -27,7 +29,10 @@ for (const file of fs.readdirSync(themeDir).filter((f) => f.endsWith('.css')).so
     // Inside the runtime @scope (:root) wrapper only the scoping root itself
     // matches :scope; a leading `html` would have to be a descendant of html.
     .replace(/html\[data-capd="dark"\]/g, ':scope[data-capd="dark"]');
-  parts[key] = css;
+  // The theme rules' !important gets the override layer's specificity boost,
+  // so they still beat the page's re-asserted !important (see the rewriter).
+  // The fallback is a first-paint baseline the full theme overrides: no boost.
+  parts[key] = key === 'fallback' ? css : boostImportantRules(css);
 }
 const genDir = path.join(rootDir, 'src', 'content', 'generated');
 fs.mkdirSync(genDir, { recursive: true });

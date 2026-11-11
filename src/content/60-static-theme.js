@@ -240,6 +240,15 @@
     // the lightest ones text sits on; that implies the base surface too.
     const raised = greyFor(20, settings);
     const onRaised = (value) => ensureContrast(value, color.parse(raised), 4.5);
+    // Message bars keep a translucent semantic tint (fluent8.css), lighter
+    // than the raised surface under it, so their links are checked against
+    // the lightest tint laid over that surface.
+    const tints = { error: 'rgba(241, 112, 123, 0.16)', warning: 'rgba(248, 196, 80, 0.16)', success: 'rgba(108, 203, 95, 0.16)' };
+    const under = color.parse(raised);
+    const lightestTint = Object.values(tints).map((t) => {
+      const c = color.parse(t);
+      return { r: c.r * c.a + under.r * (1 - c.a), g: c.g * c.a + under.g * (1 - c.a), b: c.b * c.a + under.b * (1 - c.a), a: 1 };
+    }).reduce((a, b) => (color.luminance(a) >= color.luminance(b) ? a : b));
     const spec = CAPD.FLUENT_DARK_SPEC || {};
     const vars = {
       's0': map('bg', '#e0e0e0'),
@@ -277,6 +286,10 @@
       'shadow': '0 2px 8px rgba(0, 0, 0, 0.45), 0 0 2px rgba(0, 0, 0, 0.35)',
       'selection': withAlpha(brand[100] || '#bc5fbc', 0.35),
       'link': onRaised(brand[110] || '#cb79cb'),
+      'link-on-tint': ensureContrast(onRaised(brand[110] || '#cb79cb'), lightestTint, 4.5),
+      'tint-error': tints.error,
+      'tint-warning': tints.warning,
+      'tint-success': tints.success,
       'danger': onRaised('#f1707b'),
       'success': onRaised('#6ccb5f'),
       'warning': onRaised('#f8c450'),

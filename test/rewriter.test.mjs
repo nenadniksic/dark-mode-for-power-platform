@@ -5,6 +5,8 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 require('../src/content/10-color.js');
 const rewriter = require('../src/content/20-css-rewriter.js');
+require('../src/content/generated/theme-css.js');
+const { themeCSS } = globalThis.CAPD;
 
 /* ---- tiny mock CSSOM ---------------------------------------------------- */
 function decl(obj, important = []) {
@@ -182,6 +184,30 @@ test('the boost goes before pseudo-elements and onto every selector in a list', 
   assert.equal(rewriter.boostSelector('.a::before, .b:hover .c, .d:after'),
     '.a:not(#capd-i):not(#capd-i):not(#capd-i)::before, .b:hover .c:not(#capd-i):not(#capd-i):not(#capd-i), .d:not(#capd-i):not(#capd-i):not(#capd-i):after');
   assert.equal(rewriter.boostSelector('input::-webkit-input-placeholder'), 'input:not(#capd-i):not(#capd-i):not(#capd-i)::-webkit-input-placeholder');
+  // a pseudo-class after the pseudo-element stays after it (a :not() there is invalid and drops the rule)
+  assert.equal(rewriter.boostSelector(':scope::-webkit-scrollbar-thumb:hover'), ':scope:not(#capd-i):not(#capd-i):not(#capd-i)::-webkit-scrollbar-thumb:hover');
+  // a pseudo-element with no compound of its own keeps its combinator
+  assert.equal(rewriter.boostSelector('.a ::before,.b>::after'), '.a *:not(#capd-i):not(#capd-i):not(#capd-i)::before,.b>*:not(#capd-i):not(#capd-i):not(#capd-i)::after');
+});
+
+test('theme rules: !important declarations get the boost, normal ones keep their selector', () => {
+  const B = ':not(#capd-i):not(#capd-i):not(#capd-i)';
+  assert.equal(rewriter.boostImportantRules(':scope #a{background-color:var(--x) !important;}.b,.c::before{width:2px;color:red !important}'),
+    `:scope #a${B}{background-color:var(--x) !important;}.b,.c::before{width:2px;}.b${B},.c${B}::before{color:red !important;}`);
+  // semicolons inside values and strings do not split a declaration
+  assert.equal(rewriter.boostImportantRules('.d{background-image:url("a;b") !important;content:";"}'),
+    `.d{content:";";}.d${B}{background-image:url("a;b") !important;}`);
+  assert.throws(() => rewriter.boostImportantRules('@media print{.a{color:red !important}}'), /not flat CSS/);
+});
+
+test("Studio's canvas backdrop: the theme rule outranks the page's boosted !important", () => {
+  // The page: .animatedCanvasScrollableContainer_8vu0x0 { background-color: var(--colorNeutralBackground2) !important }
+  const page = rewriter.boostSelector('.animatedCanvasScrollableContainer_8vu0x0');
+  const tuned = /([^{}]*#animatedCanvasScrollableContainer[^{}]*)\{[^}]*--capd-backdrop/.exec(themeCSS.studio);
+  assert.ok(tuned, 'the backdrop rule is in the studio theme');
+  const spec = (sel) => [(sel.match(/#[\w-]+/g) || []).length, (sel.match(/\.[\w-]+|\[[^\]]+\]|:(?!not\()[\w-]+/g) || []).length];
+  const [ti, tc] = spec(tuned[1]), [pi, pc] = spec(page);
+  assert.ok(ti > pi || (ti === pi && tc >= pc), `theme ${tuned[1]} (${ti},${tc}) vs page ${page} (${pi},${pc})`);
 });
 
 test('a text token used as a background is retargeted to its background variant', () => {

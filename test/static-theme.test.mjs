@@ -49,7 +49,7 @@ test('static and tuned layers are scoped away from the canvas, tuned rules use :
   const sp = CAPD.staticTheme.buildTuned(settings, 'sharepoint', true);
   assert.ok(sp.includes(CAPD.themeCSS.sharepoint.slice(0, 40)));
   // the library command bar keeps no band behind its buttons; the selected-items bar keeps its surface
-  assert.ok(CAPD.themeCSS.sharepoint.includes('[class*="commandBarRoot_"]:not([class*="contextual_"]){background:none !important;}'));
+  assert.ok(CAPD.themeCSS.sharepoint.includes('[class*="commandBarRoot_"]:not([class*="contextual_"]):not(#capd-i):not(#capd-i):not(#capd-i){background:none !important;}'));
   assert.ok(!sp.includes('o365sx-waffle'));
 });
 

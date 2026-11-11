@@ -317,17 +317,68 @@
   }
 
   /* Three ID-level :not()s outrank any normal page selector in practice,
-     while keeping the relative order among the page's own !important rules. */
+     while keeping the relative order among the page's own !important rules.
+     The hand-written theme rules carry the same boost on their !important
+     declarations (boostImportantRules, applied at build time), or every
+     page !important would beat them whatever their selector. */
   const IMPORTANT_BOOST = ':not(#capd-i):not(#capd-i):not(#capd-i)';
-  const PSEUDO_ELEMENT_RE = /((?:::?(?:before|after|first-line|first-letter)|::[\w-]+(?:\([^)]*\))?)+)\s*$/i;
+  // A trailing pseudo-element, with any pseudo-classes after it (::-webkit-scrollbar-thumb:hover).
+  const PSEUDO_ELEMENT_RE = /((?:::?(?:before|after|first-line|first-letter)|::[\w-]+(?:\([^)]*\))?)+(?::[\w-]+(?:\([^)]*\))?)*)\s*$/i;
 
   /** The selector with the boost added to each compound that is matched (before any pseudo-element). */
   function boostSelector(selectorText) {
     return splitSelectorList(selectorText).map((sel) => {
       const m = PSEUDO_ELEMENT_RE.exec(sel);
       if (!m) return sel.replace(/\s*$/, '') + IMPORTANT_BOOST;
-      return sel.slice(0, m.index).replace(/\s*$/, '') + IMPORTANT_BOOST + m[1];
+      const head = sel.slice(0, m.index);
+      // `.a ::before` has no compound of its own: boost `*`, keeping the combinator.
+      return (/(^|[\s>+~])$/.test(head) ? head + '*' : head) + IMPORTANT_BOOST + m[1];
     }).join(',');
+  }
+
+  /** Top-level `;`-separated declarations of a rule body, as written. */
+  function splitRawDeclarations(text) {
+    const out = [];
+    let depth = 0, quote = '', start = 0;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (quote) { if (ch === '\\') i++; else if (ch === quote) quote = ''; continue; }
+      if (ch === '"' || ch === "'") quote = ch;
+      else if (ch === '(') depth++;
+      else if (ch === ')') depth = Math.max(0, depth - 1);
+      else if (ch === ';' && depth === 0) { out.push(text.slice(start, i)); start = i + 1; }
+    }
+    out.push(text.slice(start));
+    return out.map((d) => d.trim()).filter(Boolean);
+  }
+
+  /**
+   * Flat CSS (`selector{declarations}` rules, no at-rules) with each rule's
+   * !important declarations moved to a copy of the rule whose selector
+   * carries the boost; normal declarations keep the plain selector.  The
+   * hand-written theme files go through this at build time.  The override
+   * layer re-asserts the page's own !important with the boost, and an
+   * unboosted theme rule then lost to it however specific it was: Studio's
+   * !important canvas backdrop kept the page's colour, so the "Dark canvas
+   * backdrop" switch did nothing.  With both sides boosted alike, a theme
+   * rule meets the page's rules on specificity again, and wins ties by
+   * coming after the overrides.  Throws on anything that is not flat CSS.
+   */
+  function boostImportantRules(css) {
+    const RULE_RE = /([^{}]+)\{([^{}]*)\}/g;
+    const out = [];
+    let m, last = 0;
+    while ((m = RULE_RE.exec(css)) && !css.slice(last, m.index).trim()) {
+      last = RULE_RE.lastIndex;
+      const selector = m[1].trim();
+      const decls = splitRawDeclarations(m[2]);
+      const important = decls.filter((d) => /!\s*important$/i.test(d));
+      const normal = decls.filter((d) => !/!\s*important$/i.test(d));
+      if (normal.length) out.push(`${selector}{${normal.join(';')};}`);
+      if (important.length) out.push(`${boostSelector(selector)}{${important.join(';')};}`);
+    }
+    if (css.slice(last).trim()) throw new Error(`boostImportantRules: not flat CSS near "${css.slice(last, last + 80)}"`);
+    return out.join('');
   }
 
   function serializeDecls(decls) {
@@ -432,5 +483,5 @@
     return `@scope (:root) to (${limitSelector}){${css}}${after}`;
   }
 
-  return { PROP_KIND, KINDS, VAR_SHORTHANDS, colorToken, splitDeclarations, rewriteKeyframes, boostSelector, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
+  return { PROP_KIND, KINDS, VAR_SHORTHANDS, colorToken, splitDeclarations, rewriteKeyframes, boostSelector, boostImportantRules, typedName, rewriteVar, rewriteDeclarations, rewriteRules, rewriteSheet, serializeDecls, scoped, scopeSelector, splitSelectorList };
 });
