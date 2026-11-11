@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.1 — 2026-11-11
 
 ### Fixed
 - The *Dark canvas backdrop* switch did nothing, and had not since 1.2.0: Studio's dotted work area kept a dark grey from Studio's own colours in both positions. Since 1.2.0 the theme repeats a page's `!important` declarations with a specificity boost, so that they keep beating the page's normal ones. Studio styles the backdrop with `!important`, and the boosted copy outranked the theme's own backdrop rule. The theme's hand-written `!important` rules now carry the same boost. The switch works again, and the backdrop and its dots are the theme's colours (Neon's pink dots included).
