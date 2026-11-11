@@ -37,7 +37,7 @@ English
 
 | Asset | Dimensions | Status | Filename |
 |-------|-----------|--------|----------|
-| Store Icon | 128×128 PNG | ✅ Ready | `icons/icon128.png` |
+| Store Icon | 128×128 PNG | ✅ Ready | `sample/icon.png` (the logo; `icons/icon128.png` is the same image) |
 | Screenshot 1: Studio, Classic | 1280×800 | ⬜ Not created | |
 | Screenshot 2: Studio, Neon | 1280×800 | ⬜ Not created | |
 | Screenshot 3: Power Automate flow designer | 1280×800 | ⬜ Not created | |

@@ -88,7 +88,7 @@ Everything is wrapped in a CSS `@scope (:root) to (#publishedCanvas, .app-canvas
 npm test            # unit tests + WCAG contrast gate (node:test, no dependencies)
 npm run build       # bundles theme/*.css into src/content/generated/theme-css.js and validates the manifest
 npm run tokens      # regenerates the Fluent dark token spec from tools/data/fluent-light-tokens.json
-npm run icons       # renders icons/*.png from a tiny built-in rasteriser
+npm run icons       # renders icons/*.png from the logo, sample/icon.png (no dependencies)
 npm run standalone  # builds dist/standalone/capd-standalone.js for browser-driven checks without installing
 npm run package     # dist/dark-mode-for-power-platform-<version>.zip
 npm run cws:status  # Chrome Web Store: what is published and submitted (needs the credentials below)

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- The extension's icon is now the neon "P" logo the Chrome Web Store listing shows, in the toolbar, the extensions menu, `chrome://extensions`, the popup and the options page. Until now these showed the purple crescent moon from the first release. The 16 px toolbar icon is cropped to the letter and brightened, so it still reads at that size.
+
 ## 1.3.1 — 2026-11-11
 
 ### Fixed
