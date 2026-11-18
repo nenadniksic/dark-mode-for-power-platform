@@ -202,3 +202,11 @@ test('Fluent v8 surface and input rules skip Fluent v9 elements that carry v8 cl
   }
   assert.ok(css.includes('.ms-Dialog-main:not([class*="fui-"])'));
 });
+
+test("the selected row of Studio's tree view takes the brand tint, through the token Fluent paints it with", () => {
+  const tuned = CAPD.staticTheme.buildTuned(settings, 'studio', true);
+  // Studio marks the selection with nothing but a hashed class, so the rule
+  // redefines the row's token instead of matching a state.
+  assert.match(tuned, /:scope\[data-capd="dark"\] \.fui-TreeItemLayout[^{]*\{--colorNeutralBackground2Selected:var\(--capd-accent-soft-strong\) !important;\}/);
+  assert.ok(CAPD.staticTheme.paletteVars(settings).includes('--capd-accent-soft-strong:'));
+});

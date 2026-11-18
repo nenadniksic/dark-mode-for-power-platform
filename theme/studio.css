@@ -25,6 +25,18 @@ html[data-capd="dark"] #commandBarContainer,
 html[data-capd="dark"] #formulaBarContainer,
 html[data-capd="dark"] #rootFormulaEditor { background-color: var(--capd-s1) !important; }
 
+/* ---- tree view: the selected row ----------------------------------------
+   Studio's tree is a Fluent v9 Tree whose selected row is painted with
+   colorNeutralBackground2Selected on a colorNeutralBackground2 pane.  In
+   Fluent's dark ramp those are two steps apart (about 1.05:1), so the row
+   you are on was fainter than the row you merely hover.  Studio marks the
+   selection with nothing else: aria-selected stays "false" on every item,
+   and the row's only difference is a hashed atomic class.  The token is the
+   one stable hook, so it is redefined on the row itself, where it outranks
+   the inherited theme value, as a brand tint: 1.4:1 or more against the
+   pane in every surface and style (tools/contrast-check.mjs). */
+html[data-capd="dark"] .fui-TreeItemLayout { --colorNeutralBackground2Selected: var(--capd-accent-soft-strong) !important; }
+
 /* ---- generic focus visibility: never let a focus ring disappear --------- */
 html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-Button:focus::after,
 html[data-capd="dark"] .ms-Fabric--isFocusVisible .ms-Link:focus,

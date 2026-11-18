@@ -24,6 +24,9 @@ const BRANDS = [null, '#742774', '#0066ff', '#0f6cbd'];
 // Styles: Classic with each brand, and Neon (which brings its own brand).
 const CASES = [...BRANDS.map((brand) => ({ look: 'classic', brand })), { look: 'neon', brand: null }];
 const hex = (c) => color.toHex(c);
+// A selected row is a surface, not a stroke: no WCAG bar applies.  1.4:1 is
+// what reads as "this one" beside its neighbours without shouting.
+const TREE_ROW_MIN = 1.4;
 
 export function runChecks() {
   const failures = [];
@@ -100,6 +103,22 @@ export function runChecks() {
       const ratio = color.contrast(color.parse(vars[fgName]), color.parse(vars[bgName]));
       report.push(`${label.padEnd(24)} --capd-${fgName} on --capd-${bgName} ${ratio.toFixed(2).padStart(6)}  (min ${min})`);
       if (ratio < min) failures.push(`${label}: --capd-${fgName} ${vars[fgName]} on --capd-${bgName} ${vars[bgName]} = ${ratio.toFixed(2)} < ${min}`);
+    }
+    // the selected row of Studio's tree view (theme/studio.css): the brand tint
+    // laid over the pane has to stand out from the pane, where Fluent's own
+    // selected step is about 1.05:1, and the row's text has to read on it
+    {
+      const tint = color.parse(vars['accent-soft-strong']), pane = t('colorNeutralBackground2');
+      const mix = (k) => Math.round(tint[k] * tint.a + pane[k] * (1 - tint.a)); // as the browser paints it
+      const row = { r: mix('r'), g: mix('g'), b: mix('b'), a: 1 };
+      const apart = color.contrast(row, pane);
+      report.push(`${label.padEnd(24)} selected tree row ${hex(row)} on the pane ${hex(pane)} ${apart.toFixed(2).padStart(6)}  (min ${TREE_ROW_MIN})`);
+      if (apart < TREE_ROW_MIN) failures.push(`${label}: selected tree row ${hex(row)} on the pane ${hex(pane)} = ${apart.toFixed(2)} < ${TREE_ROW_MIN}`);
+      for (const fgName of ['capd-fg-colorNeutralBackgroundStatic', 'colorNeutralForeground2']) { // the row's label, its icons
+        const ratio = color.contrast(t(fgName), row);
+        report.push(`${label.padEnd(24)} ${fgName.padEnd(34)} on the selected tree row ${ratio.toFixed(2).padStart(6)}  (min ${minText})`);
+        if (ratio < minText) failures.push(`${label}: ${fgName} on the selected tree row ${hex(row)} = ${ratio.toFixed(2)} < ${minText}`);
+      }
     }
     // links on the message bars' translucent tints, laid over the raised surface
     for (const tintName of ['tint-error', 'tint-warning', 'tint-success']) {
