@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.3 — 2026-11-18
+
+### Fixed
+- The selected item in Studio's tree view was almost invisible: its row was one shade lighter than the pane (about 1.04:1 in Neon, 1.07:1 in Classic), fainter than a row you merely pointed at. Studio paints it with a Fluent colour whose dark value sits right beside the pane's. The selected row now carries a tint of the accent colour, pink in Neon and the product's own colour in Classic, 1.4:1 or more against the pane on every surface, with its label and icons still at 4.5:1 or more (7:1 in high contrast).
+
 ## 1.3.2 — 2026-11-11
 
 ### Changed
