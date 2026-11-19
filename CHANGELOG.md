@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.4 — 2026-11-19
+
+### Fixed
+- Fewer light flashes while pages open, on every site the theme covers.
+  - The whole theme now starts from the state remembered from your last visit, the moment a page begins to load. Until now only the page background did; everything else waited for the saved settings to be read, and whatever the page drew in the meantime was light.
+  - A page opened in a background tab, or in a window covered by another, was left mostly light until you looked at it, and then turned dark in waves. The theme did the bulk of its work between animation frames, and the browser stops those for a page it is not drawing. Measured on the maker portal's home page, 6 of 165 stylesheets had been darkened after eight seconds. The work now finishes without them.
+  - A stylesheet loaded from a link (Studio has a dozen) stayed light from the moment it loaded until the page next changed something, and then for as long as fetching its text took. Its dark copy is now prepared while the stylesheet itself is loading. On a test page, 23 of 110 frames in the first two seconds showed a light band; now none do.
+  - Reading the saved settings no longer rebuilds a theme that is already right.
+
 ## 1.3.3 — 2026-11-18
 
 ### Fixed
