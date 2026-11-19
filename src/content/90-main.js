@@ -93,6 +93,13 @@
   // The page's brand colour from the last visit, so the first paint already
   // uses it (Power Automate is blue, not Power Apps purple).
   if (cached && typeof cached.brand === 'string') CAPD.brandSeed = cached.brand;
+  /** The settings the theme is built from, read back from the cached <html> attributes. */
+  function settingsFromAttrs(attrs) {
+    return CAPD.settings.normalize({
+      surface: attrs['data-capd-surface'], contrast: attrs['data-capd-contrast'], backdrop: attrs['data-capd-backdrop'],
+      look: attrs['data-capd-look'], iconAdapt: attrs['data-capd-icons'] !== 'original',
+    });
+  }
 
   /* ---------------------------------------------------------------- */
   /* Engine                                                           */
@@ -110,6 +117,11 @@
 
     update(settings) {
       const first = !this.settings;
+      // Nothing the theme is built from changed (the saved settings arriving
+      // after a start from the cached state, a schedule field): keep the styles.
+      const key = JSON.stringify([settings.surface, settings.contrast, settings.iconAdapt, settings.look, settings.backdrop]);
+      if (!first && key === this.key) return;
+      this.key = key;
       this.settings = settings;
       this.opts = { surface: settings.surface, contrast: settings.contrast, iconAdapt: settings.iconAdapt, look: settings.look };
       setHtmlAttrs(CAPD.staticTheme.htmlAttrs(settings));
@@ -205,6 +217,21 @@
   const mqContrast = mq('(prefers-contrast: more)');
 
   let engine = null;
+
+  /*
+   * Start the whole theme now, from the cached state, instead of when the
+   * saved settings arrive.  Reading them is a round trip to the browser
+   * process, and the page does not wait for it: until it came back only the
+   * page background was dark, and the page's first styles painted light.
+   * apply() then confirms the state, or stops the engine if it has changed.
+   */
+  if (fallbackEl) {
+    try {
+      engine = new Engine();
+      engine.update(settingsFromAttrs(cached.attrs));
+      CAPD.active = true;
+    } catch (e) { CAPD.warn('early start', e); engine = null; }
+  }
 
   /* Developer diagnostics can preview other settings in this page until it
      reloads (capd:override); nothing is saved. */

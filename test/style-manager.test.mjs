@@ -27,6 +27,10 @@ class FakeRoot {
   }
 }
 
+/* Animation frames never come in these tests (a background tab): the style
+   manager's timer has to stand in for them. */
+globalThis.requestAnimationFrame = () => 0;
+
 require('../src/content/00-namespace.js');
 require('../src/content/10-color.js');
 require('../src/content/20-css-rewriter.js');
@@ -151,4 +155,72 @@ test('a sheet that grows at its end gets only its new rules rewritten and append
   assert.equal(sm.stats.appends, 1);
   assert.equal(el.textContent, CAPD.rewriter.rewriteRules(rules, sm.ctx(), 0));
   sm.dispose();
+});
+
+test('a visible page keeps to its frame budget; a hidden one, which paints nothing, has none', () => {
+  const root = new FakeRoot();
+  const sm = new CAPD.StyleManager(root, options);
+  const sheets = [0, 1, 2].map((n) => pageSheet([rule('.h' + n, { color: 'rgb(50, 49, 48)' })]));
+  root.styleSheets.push(...sheets);
+  sm.spent = 1000;                      // this frame's budget is used up
+  sm.scan();
+  assert.equal(sm.overrides.size, 0, 'visible: the rest waits for the next frame');
+  root.visibilityState = 'hidden';
+  sm.scan();
+  assert.equal(sm.overrides.size, 3, 'hidden: everything is rewritten at once');
+  sm.dispose();
+});
+
+test('when no animation frame comes, a timer finishes the work', async () => {
+  const root = new FakeRoot();
+  const sm = new CAPD.StyleManager(root, options);
+  const sheet = pageSheet([rule('.late', { color: 'rgb(50, 49, 48)' })]);
+  root.styleSheets.push(sheet);
+  sm.spent = 1000;
+  sm.scan();
+  assert.equal(sm.overrides.size, 0);
+  await new Promise((r) => setTimeout(r, 200));
+  assert.match(sm.overrides.get(sheet).el.textContent, /\.late\{color:/, 'rewritten without a frame');
+  sm.dispose();
+});
+
+test('a stylesheet link gets its dark copy while it loads, and the loaded sheet takes it over', async () => {
+  const realFetch = globalThis.fetch, realSheet = globalThis.CSSStyleSheet;
+  const fetched = [];
+  globalThis.fetch = async (url) => { fetched.push(url); return { ok: true, text: async () => '.f{color:#323130}' }; };
+  globalThis.CSSStyleSheet = class { replaceSync() { this.cssRules = [rule('.f', { color: 'rgb(50, 49, 48)' })]; } };
+  try {
+    const root = new FakeRoot();
+    const sm = new CAPD.StyleManager(root, options);
+    const link = Object.assign(new FakeEl('LINK'), { href: 'https://cdn.example/a.css', media: '', sheet: null, isConnected: true });
+    sm.preload(link);
+    sm.preload(link);                    // seen again (an attribute changed): one fetch
+    await new Promise((r) => setTimeout(r, 0));
+    assert.deepEqual(fetched, ['https://cdn.example/a.css']);
+    const early = sm.early.get(link).el;
+    assert.match(early.textContent, /^\.f\{color:rgb\(/, 'dark copy installed before the sheet exists');
+    assert.equal(root.childNodes.filter((n) => n.getAttribute(CAPD.STYLE_ATTR) === 'override').length, 1);
+
+    // The sheet loads: cross-origin, so its rules cannot be read.
+    const sheet = { ownerNode: link, href: link.href, disabled: false, media: { mediaText: '' }, get cssRules() { throw new Error('SecurityError'); } };
+    link.sheet = sheet;
+    root.styleSheets.push(sheet);
+    sm.scan();
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(sm.overrides.get(sheet).el, early, 'the same element, not a second one');
+    assert.equal(sm.early.size, 0);
+    assert.equal(root.childNodes.filter((n) => n.getAttribute(CAPD.STYLE_ATTR) === 'override').length, 1);
+    assert.match(early.textContent, /^\.f\{color:rgb\(/);
+
+    // A link removed before it loaded leaves nothing behind.
+    const gone = Object.assign(new FakeEl('LINK'), { href: 'https://cdn.example/b.css', media: '', sheet: null, isConnected: true });
+    sm.preload(gone);
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(root.childNodes.filter((n) => n.getAttribute(CAPD.STYLE_ATTR) === 'override').length, 2);
+    gone.isConnected = false;
+    sm.scan();
+    assert.equal(sm.early.size, 0);
+    assert.equal(root.childNodes.filter((n) => n.getAttribute(CAPD.STYLE_ATTR) === 'override').length, 1);
+    sm.dispose();
+  } finally { globalThis.fetch = realFetch; globalThis.CSSStyleSheet = realSheet; }
 });

@@ -206,4 +206,43 @@ test('on the next page load, a cached "on" that has run out is not painted befor
   deferLoad = false;
 });
 
+test('a good cache starts the whole theme at once, before the saved settings arrive', () => {
+  let built = 0, rebuilt = 0;
+  const proto = CAPD.StyleManager.prototype;
+  const { setStaticCSS, rebuild } = proto;
+  proto.setStaticCSS = function () { built++; };
+  proto.rebuild = function () { rebuilt++; };
+  now = local(12);
+  current = CAPD.settings.normalize({ mode: 'dark', look: 'neon' });
+  store.set('capd:v1', JSON.stringify({ active: true, attrs: { 'data-capd': 'dark', 'data-capd-look': 'neon', 'data-capd-surface': 'dark', 'data-capd-contrast': 'standard', 'data-capd-backdrop': 'dark', 'data-capd-icons': 'adapt' }, until: null }));
+  deferLoad = true;
+  boot();
+  assert.equal(CAPD.active, true, 'running while the settings are still on their way');
+  assert.equal(built, 1, 'the static theme is installed from the cached state');
+
+  // The settings arrive and say the same: nothing is built twice.
+  captured(() => pendingLoad(current));
+  assert.equal(CAPD.active, true);
+  assert.equal(built, 1);
+  assert.equal(rebuilt, 0, 'no second rewrite of every page sheet');
+
+  // A setting the theme is built from does rebuild it.
+  changeSettings({ surface: 'black' });
+  assert.equal(rebuilt, 1);
+
+  // And settings that say "off" stop what the cache started.
+  CAPD.teardown();
+  store.set('capd:v1', JSON.stringify({ active: true, attrs: { 'data-capd': 'dark' }, until: null }));
+  boot();
+  assert.equal(CAPD.active, true);
+  current = CAPD.settings.normalize({ enabled: false });
+  captured(() => pendingLoad(current));
+  assert.equal(CAPD.active, false);
+  assert.equal(html.getAttribute('data-capd'), null);
+  assert.equal(CAPD.stats().active, false);
+  CAPD.teardown();
+  deferLoad = false;
+  proto.setStaticCSS = setStaticCSS; proto.rebuild = rebuild;
+});
+
 test.after(() => { Date.now = realNow; });

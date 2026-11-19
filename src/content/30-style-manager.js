@@ -23,6 +23,15 @@
    * before any one paint, so a huge burst cannot freeze the page.
    */
   const FRAME_BUDGET_MS = 40;
+  /*
+   * Animation frames stop while a tab is in the background or its window is
+   * covered, and a page opened there (a link opened in a new tab) kept every
+   * sheet past the first budget light until it was looked at, then turned
+   * dark in waves: 6 of the maker portal's 165 sheets were done after eight
+   * seconds.  A hidden page paints nothing, so it has no budget to keep; and
+   * a timer stands in for a frame that does not come.
+   */
+  const STARVED_MS = 120;
   const nextFrame = typeof requestAnimationFrame === 'function' ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
   const sheetText = new Map(); // url -> Promise<string|null>
 
@@ -65,6 +74,7 @@
       this.inlineEl = null;
       this.overrides = new Map();   // CSSStyleSheet -> { el, signature }
       this.pending = new Set();     // sheets scheduled for (re)processing
+      this.early = new Map();       // <link> still loading -> { url, el }: see preload()
       this.frameArmed = false;
       this.spent = 0;               // ms of rewriting since the last frame
       this.recheck = false;         // look again next frame: see armFrame()
@@ -146,6 +156,42 @@
       for (const [sheet, rec] of this.overrides) {
         if (!live.has(sheet)) { rec.el.remove(); this.overrides.delete(sheet); }
       }
+      // and early overrides of links that left before they loaded
+      for (const [node, early] of this.early) {
+        if (node.isConnected === false) { if (early.el) early.el.remove(); this.early.delete(node); }
+      }
+    }
+
+    /**
+     * A stylesheet <link> that is still loading.  Its sheet cannot be read
+     * until it has loaded, and a cross-origin one not even then: its text is
+     * fetched and rewritten instead, which used to start only once the sheet
+     * was already styling the page, light, for as long as the fetch took.
+     * Fetch the text while the browser loads the sheet, and install the dark
+     * copy as soon as it is ready, usually before the sheet itself applies.
+     * (Colour rules with nothing yet to override are harmless.)  process()
+     * takes the copy over when the sheet arrives.
+     */
+    preload(node) {
+      if (this.disposed || !node || node.tagName !== 'LINK' || node.sheet || node.disabled) return;
+      const url = node.href;
+      if (!url || !/^https?:/i.test(url)) return;
+      const had = this.early.get(node);
+      if (had) {
+        if (had.url === url) return;
+        if (had.el) had.el.remove(); // the link now points elsewhere
+      }
+      const early = { url, el: null };
+      this.early.set(node, early);
+      fetchSheetText(url).then((text) => {
+        if (this.disposed || this.early.get(node) !== early) return; // loaded and taken over, or replaced
+        if (text == null || node.isConnected === false || node.href !== url) { this.early.delete(node); return; }
+        const css = this.foreignCSS(text, node.media, url);
+        if (css == null) { this.early.delete(node); return; }
+        early.el = this.makeStyle('override');
+        early.el.textContent = css;
+        this.container.appendChild(early.el);
+      });
     }
 
     /** Re-process the sheet owned by this <style>/<link> node (CSSOM hook signal). */
@@ -159,13 +205,20 @@
       try { n = sheet.cssRules.length; } catch (e) { n = -2; }
       const node = sheet.ownerNode;
       const rev = node && node.getAttribute ? node.getAttribute(CAPD.REV_ATTR) || '' : '';
-      return `${n}|${rev}|${sheet.href || ''}|${sheet.disabled ? 1 : 0}`;
+      // media: a link switched from print to all once loaded needs its override wrapped anew
+      const media = (sheet.href && sheet.media && sheet.media.mediaText) || '';
+      return `${n}|${rev}|${sheet.href || ''}|${sheet.disabled ? 1 : 0}|${media}`;
+    }
+
+    /** Milliseconds of rewriting allowed before one paint; no limit while nothing is painted. */
+    budget() {
+      return this.doc.visibilityState === 'hidden' ? Infinity : FRAME_BUDGET_MS;
     }
 
     /** Rewrite what is pending now, within this frame's budget; the rest goes to the next frame. */
     flushSoon() {
       if (this.disposed || !this.pending.size) return;
-      if (this.spent < FRAME_BUDGET_MS) this.flush();
+      if (this.spent < this.budget()) this.flush();
       if (this.pending.size || this.recheck) this.armFrame();
     }
 
@@ -180,7 +233,11 @@
     armFrame() {
       if (this.frameArmed || this.disposed) return;
       this.frameArmed = true;
-      nextFrame(() => {
+      let ran = false;
+      const run = () => {
+        if (ran) return;
+        ran = true;
+        clearTimeout(timer);
         this.frameArmed = false;
         if (this.disposed) return;
         this.stats.frames++;
@@ -188,7 +245,9 @@
         if (this.recheck) { this.recheck = false; this.collect(); }
         if (this.pending.size) this.flush();
         if (this.pending.size || this.recheck) this.armFrame();
-      });
+      };
+      const timer = setTimeout(run, STARVED_MS); // no frame came: hidden tab, covered window
+      nextFrame(run);
     }
 
     /** Rewrite pending sheets until the frame's budget is spent. */
@@ -202,7 +261,7 @@
         this.pending.delete(sheet);
         this.process(sheet);
         this.recheck = true;
-        if (this.spent + performance.now() - started > FRAME_BUDGET_MS) break;
+        if (this.spent + performance.now() - started > this.budget()) break;
         next = it.next();
       }
       this.spent += performance.now() - started;
@@ -224,15 +283,18 @@
 
     process(sheet) {
       const t0 = performance.now();
+      const owner = sheet.ownerNode;
       let rec = this.overrides.get(sheet);
       if (!rec) {
-        rec = { el: this.makeStyle('override'), signature: '' };
+        // A dark copy made while the sheet was loading (preload) becomes its override.
+        const early = owner ? this.early.get(owner) : null;
+        if (early) this.early.delete(owner);
+        rec = { el: (early && early.el) || this.makeStyle('override'), signature: '' };
         this.overrides.set(sheet, rec);
-        this.container.appendChild(rec.el);
+        if (!(early && early.el)) this.container.appendChild(rec.el);
       }
       rec.signature = this.signature(sheet);
       if (sheet.disabled) { rec.el.textContent = ''; rec.count = 0; return; }
-      const owner = sheet.ownerNode;
       if (this.options.onBrand && owner && owner.id && owner.id.indexOf('fui-FluentProvider') === 0) this.readBrand(sheet, owner.id);
       const ctx = this.ctx();
       if (this.appendNew(sheet, rec, ctx)) { this.stats.ms += performance.now() - t0; return; }
@@ -306,6 +368,15 @@
       const text = await fetchSheetText(url);
       if (this.disposed || text == null) return;
       if (!this.overrides.has(sheet)) return; // sheet went away meanwhile
+      const scopedCss = this.foreignCSS(text, media, url);
+      if (scopedCss == null) return;
+      if (append) rec.el.textContent += scopedCss;
+      else if (rec.el.textContent !== scopedCss) rec.el.textContent = scopedCss;
+      this.ensureOrder();
+    }
+
+    /** The override for a stylesheet known only by its text (cross-origin, or not loaded yet); null if it will not parse. */
+    foreignCSS(text, media, url) {
       let css = '';
       const ctx = this.ctx();
       try {
@@ -314,14 +385,11 @@
         css = rewriter.rewriteRules(constructed.cssRules, ctx, 0);
       } catch (e) {
         CAPD.log('foreign sheet failed', url, e);
-        return;
+        return null;
       }
       const keyframes = media ? ctx.keyframes.map((k) => `@media ${media}{${k}}`) : ctx.keyframes;
       if (media && css) css = `@media ${media}{${css}}`;
-      const scopedCss = rewriter.scoped(css, this.options.limitSelector, keyframes);
-      if (append) rec.el.textContent += scopedCss;
-      else if (rec.el.textContent !== scopedCss) rec.el.textContent = scopedCss;
-      this.ensureOrder();
+      return rewriter.scoped(css, this.options.limitSelector, keyframes);
     }
 
     /**
@@ -418,6 +486,8 @@
       if (this.inlineEl) this.inlineEl.remove();
       for (const rec of this.overrides.values()) rec.el.remove();
       this.overrides.clear();
+      for (const early of this.early.values()) if (early.el) early.el.remove();
+      this.early.clear();
       this.pending.clear();
     }
   }

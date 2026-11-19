@@ -20,6 +20,9 @@
       this.h = handlers;            // { styleManager, inline, onShadowRoot }
       this.observer = null;
       this.scanQueued = false;
+      // A stylesheet <link> finishing its load is no DOM mutation: look at
+      // the sheets at once, before the page paints with the new one.
+      this.onLoad = (e) => { if (isStyleNode(e.target)) this.h.styleManager.scan(); };
     }
 
     start() {
@@ -31,10 +34,14 @@
         attributes: true,
         attributeFilter: ['style', 'fill', 'stroke', CAPD.REV_ATTR, 'href', 'media', 'disabled', 'rel'],
       });
+      this.target.addEventListener('load', this.onLoad, true); // load does not bubble: capture
+      const links = this.target.querySelectorAll('link[rel~="stylesheet"]');
+      for (let i = 0; i < links.length; i++) this.h.styleManager.preload(links[i]);
     }
 
     stop() {
       if (this.observer) { this.observer.disconnect(); this.observer = null; }
+      this.target.removeEventListener('load', this.onLoad, true);
     }
 
     /* Scanning is cheap (a rule count per sheet), so it runs at once, in this
@@ -58,7 +65,7 @@
         if (m.type === 'attributes') {
           if (t.nodeType !== 1) continue;
           if (m.attributeName === CAPD.REV_ATTR) { sm.touchNode(t); continue; }
-          if (isStyleNode(t)) { this.scheduleScan(); continue; }
+          if (isStyleNode(t)) { sm.preload(t); this.scheduleScan(); continue; }
           if (t.hasAttribute && t.hasAttribute(CAPD.STYLE_ATTR)) continue;
           inline.processElement(t);
           continue;
@@ -70,10 +77,14 @@
         for (let j = 0; j < added.length; j++) {
           const n = added[j];
           if (n.nodeType !== 1) continue;
-          if (isStyleNode(n)) { needScan = true; continue; }
+          if (isStyleNode(n)) { sm.preload(n); needScan = true; continue; }
           if (n.hasAttribute && n.hasAttribute(CAPD.STYLE_ATTR)) continue;
           inline.processTree(n);
-          if (n.querySelector && n.querySelector('style,link[rel~="stylesheet"]')) needScan = true;
+          if (n.querySelector && n.querySelector('style,link[rel~="stylesheet"]')) {
+            needScan = true;
+            const links = n.querySelectorAll('link[rel~="stylesheet"]');
+            for (let k = 0; k < links.length; k++) sm.preload(links[k]);
+          }
           if (n.shadowRoot && this.h.onShadowRoot) this.h.onShadowRoot(n.shadowRoot);
         }
         const removed = m.removedNodes;
